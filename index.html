@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>NoteSync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS & THEME
+═══════════════════════════════════════════════ */
+:root {
+  --font-main: 'Sora', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+/* Light theme */
+–bg-primary: #f5f4f0;
+–bg-secondary: #ffffff;
+–bg-tertiary: #ece9e3;
+–bg-card: #ffffff;
+–bg-overlay: #ffffff;
+–bg-sidebar: #1a1a2e;
+–text-primary: #1a1a1a;
+–text-secondary: #5a5a6a;
+–text-muted: #9a9aaa;
+–text-on-sidebar: #e8e8f0;
+–border: #e0ddd8;
+–border-strong: #c8c5be;
+–accent: #2d6a4f;
+–accent-hover: #1e4d38;
+–accent-light: #d8f3dc;
+–accent-text: #1b4332;
+–high: #e63946;
+–high-bg: #fde8ea;
+–med: #f4a261;
+–med-bg: #fef3e2;
+–low: #2d6a4f;
+–low-bg: #d8f3dc;
+–search-hl: #ffd60a;
+–shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
+–shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+–shadow-lg: 0 12px 40px rgba(0,0,0,0.14);
+–radius: 12px;
+–radius-sm: 8px;
+–radius-lg: 20px;
+–toolbar-height: 56px;
+–bottom-bar-height: 68px;
+}
+
+[data-theme=“dark”] {
+–bg-primary: #0f0f14;
+–bg-secondary: #1a1a24;
+–bg-tertiary: #242432;
+–bg-card: #1e1e2c;
+–bg-overlay: #1e1e2c;
+–bg-sidebar: #0a0a12;
+–text-primary: #e8e8f4;
+–text-secondary: #a0a0c0;
+–text-muted: #5a5a7a;
+–text-on-sidebar: #d0d0e8;
+–border: #2a2a3e;
+–border-strong: #3a3a52;
+–accent: #52b788;
+–accent-hover: #74c69d;
+–accent-light: #1b3a2b;
+–accent-text: #95d5b2;
+–high: #ff6b7a;
+–high-bg: #2d1215;
+–med: #ffa552;
+–med-bg: #2a1a08;
+–low: #52b788;
+–low-bg: #0d2318;
+–search-hl: #b5880a;
+–shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+–shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+–shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+/* ═══════════════════════════════════════════════
+RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+font-family: var(–font-main);
+background: var(–bg-primary);
+color: var(–text-primary);
+transition: background 0.3s, color 0.3s;
+-webkit-tap-highlight-color: transparent;
+user-select: none;
+}
+button { font-family: var(–font-main); cursor: pointer; border: none; background: none; }
+input, textarea { font-family: var(–font-main); }
+
+- { -webkit-overflow-scrolling: touch; }
+
+/* ═══════════════════════════════════════════════
+LAYOUT SHELL
+═══════════════════════════════════════════════ */
+#app {
+display: flex;
+height: 100vh;
+height: 100dvh;
+position: relative;
+overflow: hidden;
+}
+
+/* Sidebar */
+#sidebar {
+width: 260px;
+background: var(–bg-sidebar);
+display: flex;
+flex-direction: column;
+padding: 0;
+flex-shrink: 0;
+z-index: 200;
+transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-logo {
+padding: 24px 20px 20px;
+border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo h1 {
+font-size: 22px;
+font-weight: 700;
+color: var(–accent-hover);
+letter-spacing: -0.5px;
+}
+[data-theme=“dark”] .sidebar-logo h1 { color: var(–accent); }
+.sidebar-logo span { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 400; display: block; margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-item {
+display: flex; align-items: center; gap: 12px;
+padding: 12px 20px;
+color: rgba(255,255,255,0.6);
+font-size: 14px; font-weight: 500;
+cursor: pointer;
+transition: all 0.2s;
+border-left: 3px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+.nav-item.active { background: rgba(82,183,136,0.15); color: #52b788; border-left-color: #52b788; }
+[data-theme=“light”] .nav-item.active { color: #74c69d; }
+.nav-item .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+.sidebar-footer {
+padding: 16px 20px;
+border-top: 1px solid rgba(255,255,255,0.08);
+display: flex; align-items: center; justify-content: space-between;
+}
+.theme-toggle {
+display: flex; align-items: center; gap: 8px;
+color: rgba(255,255,255,0.5); font-size: 13px;
+}
+.toggle-btn {
+width: 40px; height: 22px;
+background: rgba(255,255,255,0.1);
+border-radius: 11px;
+position: relative;
+cursor: pointer;
+transition: background 0.3s;
+}
+.toggle-btn.on { background: var(–accent); }
+.toggle-thumb {
+position: absolute;
+top: 3px; left: 3px;
+width: 16px; height: 16px;
+background: white;
+border-radius: 50%;
+transition: transform 0.3s;
+}
+.toggle-btn.on .toggle-thumb { transform: translateX(18px); }
+
+/* Main content */
+#main {
+flex: 1;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+position: relative;
+}
+
+/* Top bar */
+#topbar {
+height: var(–toolbar-height);
+background: var(–bg-secondary);
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+padding: 0 16px;
+gap: 12px;
+flex-shrink: 0;
+z-index: 100;
+box-shadow: var(–shadow-sm);
+}
+#menu-btn {
+display: none;
+width: 36px; height: 36px;
+align-items: center; justify-content: center;
+border-radius: var(–radius-sm);
+color: var(–text-secondary);
+font-size: 18px;
+flex-shrink: 0;
+}
+.search-wrap {
+flex: 1;
+position: relative;
+display: flex; align-items: center;
+}
+.search-icon { position: absolute; left: 12px; color: var(–text-muted); font-size: 15px; pointer-events: none; }
+#search-input {
+width: 100%;
+height: 36px;
+background: var(–bg-tertiary);
+border: 1.5px solid var(–border);
+border-radius: 18px;
+padding: 0 12px 0 36px;
+font-size: 14px;
+color: var(–text-primary);
+outline: none;
+transition: border-color 0.2s, background 0.2s;
+}
+#search-input:focus { border-color: var(–accent); background: var(–bg-secondary); }
+#search-input::placeholder { color: var(–text-muted); }
+#search-clear {
+position: absolute; right: 10px;
+color: var(–text-muted); font-size: 14px;
+display: none; cursor: pointer;
+width: 20px; height: 20px;
+align-items: center; justify-content: center;
+border-radius: 50%; background: var(–bg-tertiary);
+}
+
+/* Pages */
+.page { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.page.active { display: flex; }
+
+/* ═══════════════════════════════════════════════
+CALENDAR HOME
+═══════════════════════════════════════════════ */
+#page-home {
+background: var(–bg-primary);
+}
+.cal-header {
+display: flex; align-items: center; justify-content: space-between;
+padding: 16px 20px 8px;
+}
+.cal-month-title {
+font-size: 20px; font-weight: 700;
+color: var(–text-primary);
+letter-spacing: -0.3px;
+}
+.cal-nav { display: flex; gap: 8px; }
+.cal-nav button {
+width: 32px; height: 32px;
+border-radius: 8px;
+background: var(–bg-tertiary);
+color: var(–text-secondary);
+font-size: 16px;
+display: flex; align-items: center; justify-content: center;
+transition: all 0.2s;
+}
+.cal-nav button:hover { background: var(–accent); color: white; }
+.cal-grid {
+padding: 0 12px;
+flex: 1;
+overflow-y: auto;
+}
+.cal-weekdays {
+display: grid; grid-template-columns: repeat(7, 1fr);
+padding: 8px 0 4px;
+}
+.cal-weekday {
+text-align: center;
+font-size: 11px; font-weight: 600;
+color: var(–text-muted);
+text-transform: uppercase;
+letter-spacing: 0.5px;
+padding: 4px;
+}
+.cal-days {
+display: grid; grid-template-columns: repeat(7, 1fr);
+gap: 4px;
+}
+.cal-day {
+aspect-ratio: 1;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+border-radius: 10px;
+cursor: pointer;
+transition: all 0.18s;
+position: relative;
+padding: 4px;
+}
+.cal-day:hover { background: var(–bg-tertiary); }
+.cal-day.today { background: var(–accent-light); }
+.cal-day.today .cal-day-num { color: var(–accent-text); font-weight: 700; }
+.cal-day.has-notes { cursor: pointer; }
+.cal-day.empty { cursor: default; }
+.cal-day.other-month .cal-day-num { color: var(–text-muted); }
+.cal-day-num { font-size: 14px; font-weight: 500; color: var(–text-primary); }
+.cal-day-dot {
+font-size: 10px; font-weight: 600;
+color: var(–accent);
+margin-top: 2px;
+background: var(–accent-light);
+border-radius: 8px;
+padding: 1px 5px;
+min-width: 18px; text-align: center;
+}
+.cal-day.today .cal-day-dot { background: var(–accent); color: white; }
+.cal-selected { background: var(–accent) !important; }
+.cal-selected .cal-day-num { color: white !important; }
+.cal-selected .cal-day-dot { background: rgba(255,255,255,0.25); color: white; }
+
+/* Day notes panel */
+.day-notes-panel {
+margin: 8px 12px 0;
+background: var(–bg-secondary);
+border-radius: var(–radius);
+padding: 12px;
+border: 1px solid var(–border);
+display: none;
+}
+.day-notes-panel.visible { display: block; }
+.day-notes-title {
+font-size: 13px; font-weight: 600;
+color: var(–text-secondary);
+margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+NOTES LIST
+═══════════════════════════════════════════════ */
+#page-notes {
+background: var(–bg-primary);
+}
+.notes-list-wrap {
+flex: 1; overflow-y: auto;
+padding: 0 0 var(–bottom-bar-height);
+}
+.month-group { margin-bottom: 4px; }
+.month-group-header {
+position: sticky; top: 0;
+background: var(–bg-primary);
+padding: 14px 16px 6px;
+font-size: 11px; font-weight: 700;
+text-transform: uppercase; letter-spacing: 1px;
+color: var(–text-muted);
+z-index: 10;
+border-bottom: 1px solid var(–border);
+}
+.note-row {
+background: var(–bg-card);
+border-bottom: 1px solid var(–border);
+padding: 12px 16px;
+cursor: pointer;
+transition: background 0.15s;
+position: relative;
+}
+.note-row:hover { background: var(–bg-tertiary); }
+.note-row:active { background: var(–bg-tertiary); }
+.note-row-top {
+display: flex; align-items: flex-start; justify-content: space-between;
+gap: 8px; margin-bottom: 4px;
+}
+.note-row-heading {
+font-size: 14px; font-weight: 600;
+color: var(–text-primary);
+flex: 1;
+white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.note-row-heading:empty::before { content: ‘Untitled Note’; color: var(–text-muted); }
+.note-row-meta {
+display: flex; align-items: center; gap: 6px;
+flex-shrink: 0;
+}
+.priority-badge {
+font-size: 10px; font-weight: 700;
+padding: 2px 7px;
+border-radius: 20px;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+.priority-badge.high { background: var(–high-bg); color: var(–high); }
+.priority-badge.medium { background: var(–med-bg); color: var(–med); }
+.priority-badge.low { background: var(–low-bg); color: var(–low); }
+.note-row-datetime {
+font-size: 11px; color: var(–text-muted);
+font-family: var(–font-mono);
+}
+.note-row-body {
+font-size: 13px; color: var(–text-secondary);
+line-height: 1.5;
+display: -webkit-box;
+-webkit-line-clamp: 2;
+-webkit-box-orient: vertical;
+overflow: hidden;
+margin-bottom: 4px;
+}
+.note-row-participants {
+font-size: 11px; color: var(–text-muted);
+display: flex; align-items: center; gap: 4px;
+}
+.participant-chip {
+background: var(–bg-tertiary);
+border-radius: 10px;
+padding: 2px 7px;
+font-size: 11px;
+color: var(–text-secondary);
+}
+mark.hl {
+background: var(–search-hl);
+color: #1a1a1a;
+border-radius: 2px;
+padding: 0 1px;
+}
+
+/* ═══════════════════════════════════════════════
+SEARCH RESULTS
+═══════════════════════════════════════════════ */
+#page-search {
+background: var(–bg-primary);
+}
+.search-results-header {
+padding: 12px 16px 4px;
+font-size: 12px; font-weight: 600;
+color: var(–text-muted);
+text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* ═══════════════════════════════════════════════
+BOTTOM FAB
+═══════════════════════════════════════════════ */
+.bottom-bar {
+position: fixed;
+bottom: 0; right: 0;
+width: calc(100% - 260px);
+height: var(–bottom-bar-height);
+background: var(–bg-secondary);
+border-top: 1px solid var(–border);
+display: flex; align-items: center; justify-content: center;
+z-index: 50;
+}
+.fab {
+width: 52px; height: 52px;
+border-radius: 50%;
+background: var(–accent);
+color: white;
+font-size: 26px;
+display: flex; align-items: center; justify-content: center;
+box-shadow: 0 4px 16px rgba(45,106,79,0.4);
+transition: all 0.2s;
+cursor: pointer;
+border: none;
+}
+.fab:hover { background: var(–accent-hover); transform: scale(1.06); }
+.fab:active { transform: scale(0.96); }
+
+/* ═══════════════════════════════════════════════
+MODAL / POPUP (Note Editor)
+═══════════════════════════════════════════════ */
+#modal-overlay {
+display: none;
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.5);
+z-index: 500;
+align-items: center;
+justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#note-modal {
+background: var(–bg-overlay);
+border-radius: var(–radius-lg);
+width: min(720px, calc(100vw - 32px));
+max-height: min(90vh, 90dvh);
+display: flex;
+flex-direction: column;
+box-shadow: var(–shadow-lg);
+overflow: hidden;
+position: relative;
+}
+.modal-topbar {
+padding: 12px 16px;
+border-bottom: 1px solid var(–border);
+display: flex; align-items: center; gap: 8px;
+background: var(–bg-overlay);
+}
+.modal-close {
+width: 30px; height: 30px;
+border-radius: 50%;
+background: var(–bg-tertiary);
+color: var(–text-secondary);
+font-size: 16px;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+flex-shrink: 0;
+transition: background 0.2s;
+}
+.modal-close:hover { background: var(–high-bg); color: var(–high); }
+.modal-title-row {
+flex: 1; display: flex; align-items: center; gap: 8px;
+}
+.modal-save-status {
+font-size: 11px; color: var(–text-muted);
+font-family: var(–font-mono);
+}
+.modal-actions { display: flex; gap: 6px; }
+.btn-icon {
+width: 32px; height: 32px;
+border-radius: var(–radius-sm);
+background: var(–bg-tertiary);
+color: var(–text-secondary);
+font-size: 14px;
+display: flex; align-items: center; justify-content: center;
+transition: all 0.2s;
+}
+.btn-icon:hover { background: var(–accent-light); color: var(–accent); }
+
+/* Meta fields */
+.modal-meta {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr auto;
+gap: 8px;
+padding: 10px 16px;
+border-bottom: 1px solid var(–border);
+background: var(–bg-overlay);
+align-items: center;
+}
+.meta-field { display: flex; flex-direction: column; gap: 3px; }
+.meta-label {
+font-size: 10px; font-weight: 600;
+text-transform: uppercase; letter-spacing: 0.5px;
+color: var(–text-muted);
+}
+.meta-input {
+background: var(–bg-tertiary);
+border: 1.5px solid var(–border);
+border-radius: var(–radius-sm);
+padding: 5px 8px;
+font-size: 12px; color: var(–text-primary);
+outline: none;
+transition: border-color 0.2s;
+width: 100%;
+}
+.meta-input:focus { border-color: var(–accent); }
+select.meta-input option { background: var(–bg-overlay); color: var(–text-primary); }
+.meta-datetime {
+font-size: 11px; color: var(–text-muted);
+font-family: var(–font-mono);
+white-space: nowrap;
+}
+
+/* Note heading */
+.note-heading-input {
+width: 100%;
+padding: 14px 16px 8px;
+font-size: 20px; font-weight: 700;
+color: var(–text-primary);
+background: var(–bg-overlay);
+border: none; outline: none;
+border-bottom: 1px solid var(–border);
+font-family: var(–font-main);
+}
+.note-heading-input::placeholder { color: var(–text-muted); font-weight: 400; }
+
+/* Rich text toolbar */
+.editor-toolbar {
+display: flex;
+gap: 2px;
+padding: 6px 10px;
+border-bottom: 1px solid var(–border);
+background: var(–bg-overlay);
+flex-wrap: wrap;
+align-items: center;
+}
+.toolbar-btn {
+width: 28px; height: 28px;
+border-radius: 6px;
+background: none;
+color: var(–text-secondary);
+font-size: 13px;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+transition: all 0.15s;
+flex-shrink: 0;
+}
+.toolbar-btn:hover { background: var(–bg-tertiary); color: var(–text-primary); }
+.toolbar-btn.active { background: var(–accent-light); color: var(–accent); }
+.toolbar-sep {
+width: 1px; height: 20px;
+background: var(–border);
+margin: 0 4px;
+flex-shrink: 0;
+}
+.toolbar-select {
+height: 26px;
+background: var(–bg-tertiary);
+border: 1px solid var(–border);
+border-radius: 6px;
+padding: 0 6px;
+font-size: 12px;
+color: var(–text-primary);
+outline: none;
+cursor: pointer;
+}
+.toolbar-size {
+display: flex; align-items: center; gap: 2px;
+}
+.toolbar-size input {
+width: 36px; height: 26px;
+text-align: center;
+background: var(–bg-tertiary);
+border: 1px solid var(–border);
+border-radius: 6px;
+font-size: 12px;
+color: var(–text-primary);
+outline: none;
+}
+
+/* Editor body */
+.note-editor-wrap {
+flex: 1;
+overflow-y: auto;
+padding: 12px 16px;
+background: var(–bg-overlay);
+}
+#note-editor {
+min-height: 200px;
+outline: none;
+font-size: 14px;
+line-height: 1.7;
+color: var(–text-primary);
+caret-color: var(–accent);
+user-select: text;
+-webkit-user-select: text;
+}
+#note-editor:empty::before {
+content: ‘Start writing your note…’;
+color: var(–text-muted);
+pointer-events: none;
+}
+#note-editor ul, #note-editor ol {
+padding-left: 20px; margin: 4px 0;
+}
+#note-editor li { margin: 2px 0; }
+#note-editor .checkbox-item {
+display: flex; align-items: flex-start; gap: 8px;
+margin: 3px 0;
+}
+#note-editor .checkbox-item input[type=“checkbox”] {
+margin-top: 3px; flex-shrink: 0;
+accent-color: var(–accent);
+cursor: pointer;
+}
+#note-editor .checkbox-item.checked span {
+text-decoration: line-through;
+color: var(–text-muted);
+}
+
+/* View mode */
+#note-view-content {
+flex: 1;
+overflow-y: auto;
+padding: 12px 16px;
+font-size: 14px;
+line-height: 1.7;
+color: var(–text-primary);
+background: var(–bg-overlay);
+user-select: text;
+-webkit-user-select: text;
+}
+#note-view-content ul, #note-view-content ol { padding-left: 20px; }
+
+/* ═══════════════════════════════════════════════
+DAY NOTES MODAL (tap day on calendar)
+═══════════════════════════════════════════════ */
+#day-modal-overlay {
+display: none;
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.5);
+z-index: 400;
+align-items: flex-end;
+justify-content: center;
+}
+#day-modal-overlay.open { display: flex; }
+#day-modal {
+background: var(–bg-overlay);
+border-radius: var(–radius-lg) var(–radius-lg) 0 0;
+width: 100%;
+max-width: 720px;
+max-height: 70vh;
+display: flex; flex-direction: column;
+box-shadow: var(–shadow-lg);
+overflow: hidden;
+}
+.day-modal-header {
+padding: 16px 20px;
+display: flex; align-items: center; justify-content: space-between;
+border-bottom: 1px solid var(–border);
+}
+.day-modal-title { font-size: 16px; font-weight: 700; }
+.day-modal-close {
+width: 28px; height: 28px; border-radius: 50%;
+background: var(–bg-tertiary); color: var(–text-secondary);
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+}
+.day-modal-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+/* ═══════════════════════════════════════════════
+PARTICIPANTS INPUT
+═══════════════════════════════════════════════ */
+.participants-wrap {
+display: flex; flex-wrap: wrap; align-items: center;
+gap: 4px;
+background: var(–bg-tertiary);
+border: 1.5px solid var(–border);
+border-radius: var(–radius-sm);
+padding: 4px 8px;
+min-height: 32px;
+cursor: text;
+transition: border-color 0.2s;
+}
+.participants-wrap:focus-within { border-color: var(–accent); }
+.participant-tag {
+background: var(–accent-light);
+color: var(–accent-text);
+border-radius: 10px;
+padding: 2px 8px;
+font-size: 11px; font-weight: 500;
+display: flex; align-items: center; gap: 4px;
+white-space: nowrap;
+}
+.participant-tag .remove-tag { cursor: pointer; opacity: 0.7; }
+.participant-tag .remove-tag:hover { opacity: 1; }
+.participant-input {
+border: none; background: none;
+outline: none; font-size: 12px;
+color: var(–text-primary);
+min-width: 80px; flex: 1;
+padding: 0;
+}
+
+/* ═══════════════════════════════════════════════
+FIREBASE CONFIG PROMPT
+═══════════════════════════════════════════════ */
+#firebase-setup {
+position: fixed; inset: 0;
+background: var(–bg-overlay);
+z-index: 9999;
+display: flex; align-items: center; justify-content: center;
+padding: 24px;
+}
+.setup-card {
+background: var(–bg-card);
+border-radius: var(–radius-lg);
+padding: 32px;
+max-width: 480px; width: 100%;
+box-shadow: var(–shadow-lg);
+border: 1px solid var(–border);
+}
+.setup-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.setup-card p { font-size: 13px; color: var(–text-secondary); margin-bottom: 20px; line-height: 1.6; }
+.setup-field { margin-bottom: 12px; }
+.setup-field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(–text-muted); display: block; margin-bottom: 4px; }
+.setup-field input {
+width: 100%; padding: 8px 12px;
+background: var(–bg-tertiary);
+border: 1.5px solid var(–border);
+border-radius: var(–radius-sm);
+font-size: 13px; color: var(–text-primary);
+outline: none;
+transition: border-color 0.2s;
+}
+.setup-field input:focus { border-color: var(–accent); }
+.setup-btn {
+width: 100%; padding: 12px;
+background: var(–accent); color: white;
+border-radius: var(–radius-sm);
+font-size: 14px; font-weight: 600;
+cursor: pointer;
+transition: background 0.2s;
+margin-top: 8px;
+}
+.setup-btn:hover { background: var(–accent-hover); }
+.setup-skip { font-size: 12px; color: var(–text-muted); text-align: center; margin-top: 12px; cursor: pointer; }
+.setup-skip:hover { color: var(–text-secondary); }
+
+/* ═══════════════════════════════════════════════
+MOBILE RESPONSIVE
+═══════════════════════════════════════════════ */
+.sidebar-backdrop {
+display: none;
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.4);
+z-index: 190;
+}
+@media (max-width: 640px) {
+#sidebar {
+position: fixed; top: 0; left: 0; bottom: 0;
+width: 260px;
+transform: translateX(-100%);
+z-index: 200;
+}
+#sidebar.open { transform: translateX(0); }
+.sidebar-backdrop.open { display: block; }
+#menu-btn { display: flex; }
+.bottom-bar { width: 100%; }
+#note-modal {
+width: 100%;
+max-height: 100dvh;
+border-radius: 0;
+margin: 0;
+}
+#modal-overlay { align-items: flex-start; }
+.modal-meta { grid-template-columns: 1fr 1fr; }
+.meta-datetime { display: none; }
+}
+
+/* ═══════════════════════════════════════════════
+EMPTY STATE
+═══════════════════════════════════════════════ */
+.empty-state {
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+padding: 60px 24px;
+text-align: center;
+flex: 1;
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.empty-state p { font-size: 13px; color: var(–text-muted); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(–border-strong); border-radius: 4px; }
+
+/* Toast */
+.toast {
+position: fixed; bottom: 80px; left: 50%;
+transform: translateX(-50%) translateY(20px);
+background: var(–bg-card);
+border: 1px solid var(–border);
+color: var(–text-primary);
+padding: 10px 18px;
+border-radius: 20px;
+font-size: 13px;
+box-shadow: var(–shadow-md);
+opacity: 0;
+transition: all 0.3s;
+z-index: 9000;
+white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Font family options in editor */
+#note-editor [style*=“font-family: ‘Courier New’”],
+#note-view-content [style*=“font-family: ‘Courier New’”] { font-family: var(–font-mono) !important; }
+
+/* Checkbox in view mode */
+#note-view-content input[type=“checkbox”] { accent-color: var(–accent); }
+</style>
+
+</head>
+<body>
+
+<!-- Firebase Setup -->
+
+<div id="firebase-setup">
+  <div class="setup-card">
+    <h2>🔥 Connect Firebase</h2>
+    <p>NoteSync uses Firebase for real-time sync across devices. Enter your Firebase project config below, or skip to use local storage only.</p>
+    <div class="setup-field"><label>API Key</label><input id="fb-apiKey" placeholder="AIzaSy..."></div>
+    <div class="setup-field"><label>Auth Domain</label><input id="fb-authDomain" placeholder="your-app.firebaseapp.com"></div>
+    <div class="setup-field"><label>Project ID</label><input id="fb-projectId" placeholder="your-project-id"></div>
+    <div class="setup-field"><label>App ID</label><input id="fb-appId" placeholder="1:xxx:web:xxx"></div>
+    <button class="setup-btn" onclick="initFirebase()">Connect & Sync</button>
+    <div class="setup-skip" onclick="skipFirebase()">Skip — use local storage only</div>
+  </div>
+</div>
+
+<!-- App Shell -->
+
+<div id="app">
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <h1>NoteSync</h1>
+      <span>Your notes, everywhere.</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" data-page="home" onclick="showPage('home',this)">
+        <span class="nav-icon">📅</span> Calendar
+      </div>
+      <div class="nav-item" data-page="notes" onclick="showPage('notes',this)">
+        <span class="nav-icon">📋</span> All Notes
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="theme-toggle">
+        <span>☀️</span>
+        <div class="toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()">
+          <div class="toggle-thumb"></div>
+        </div>
+        <span>🌙</span>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--font-mono);" id="sync-status">local</div>
+    </div>
+  </nav>
+
+  <!-- Sidebar backdrop (mobile) -->
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+  <!-- Main -->
+
+  <div id="main">
+    <!-- Topbar -->
+    <div id="topbar">
+      <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="search-input" type="search" placeholder="Search notes…" autocomplete="off"
+          oninput="handleSearch(this.value)" onfocus="handleSearch(this.value)">
+        <div id="search-clear" onclick="clearSearch()">✕</div>
+      </div>
+    </div>
+
+```
+<!-- Page: Home (Calendar) -->
+<div id="page-home" class="page active">
+  <div class="cal-header">
+    <div class="cal-month-title" id="cal-title">April 2026</div>
+    <div class="cal-nav">
+      <button onclick="calNav(-1)">‹</button>
+      <button onclick="calNav(1)">›</button>
+    </div>
+  </div>
+  <div class="cal-grid">
+    <div class="cal-weekdays">
+      <div class="cal-weekday">Su</div><div class="cal-weekday">Mo</div>
+      <div class="cal-weekday">Tu</div><div class="cal-weekday">We</div>
+      <div class="cal-weekday">Th</div><div class="cal-weekday">Fr</div>
+      <div class="cal-weekday">Sa</div>
+    </div>
+    <div class="cal-days" id="cal-days"></div>
+  </div>
+</div>
+
+<!-- Page: Notes List -->
+<div id="page-notes" class="page">
+  <div class="notes-list-wrap" id="notes-list-wrap"></div>
+</div>
+
+<!-- Page: Search Results -->
+<div id="page-search" class="page">
+  <div class="search-results-header" id="search-count">0 results</div>
+  <div class="notes-list-wrap" id="search-results-wrap"></div>
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <button class="fab" onclick="openNewNote()" title="New Note">＋</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- Day Notes Modal -->
+
+<div id="day-modal-overlay" onclick="closeDayModal(event)">
+  <div id="day-modal">
+    <div class="day-modal-header">
+      <div class="day-modal-title" id="day-modal-title">Notes</div>
+      <div class="day-modal-close" onclick="closeDayModal()">✕</div>
+    </div>
+    <div class="day-modal-list" id="day-modal-list"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);">
+      <button style="width:100%;padding:10px;background:var(--accent);color:white;border-radius:var(--radius-sm);font-size:14px;font-weight:600;" onclick="closeDayModal();openNewNote()">＋ Add Note for this day</button>
+    </div>
+  </div>
+</div>
+
+<!-- Note Modal (View/Edit) -->
+
+<div id="modal-overlay" onclick="handleModalOverlayClick(event)">
+  <div id="note-modal">
+    <!-- Top bar -->
+    <div class="modal-topbar">
+      <div class="modal-close" onclick="closeNote()">✕</div>
+      <div class="modal-title-row">
+        <span class="modal-save-status" id="save-status">●&nbsp;Saved</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-icon" id="view-edit-btn" onclick="toggleViewEdit()" title="Edit">✏️</button>
+        <button class="btn-icon" onclick="deleteCurrentNote()" title="Delete">🗑️</button>
+      </div>
+    </div>
+
+```
+<!-- Meta -->
+<div class="modal-meta" id="note-meta-section">
+  <div class="meta-field">
+    <div class="meta-label">Heading</div>
+    <input class="meta-input" id="meta-heading" placeholder="Note title…" oninput="scheduleAutosave()">
+  </div>
+  <div class="meta-field">
+    <div class="meta-label">Priority</div>
+    <select class="meta-input" id="meta-priority" onchange="scheduleAutosave()">
+      <option value="">— None —</option>
+      <option value="high">🔴 High</option>
+      <option value="medium">🟠 Medium</option>
+      <option value="low">🟢 Low</option>
+    </select>
+  </div>
+  <div class="meta-field">
+    <div class="meta-label">Participants</div>
+    <div class="participants-wrap" id="participants-wrap" onclick="document.getElementById('participant-input').focus()">
+      <input id="participant-input" class="participant-input" placeholder="Add name…"
+        onkeydown="handleParticipantKey(event)" oninput="scheduleAutosave()">
+    </div>
+  </div>
+  <div class="meta-datetime" id="note-datetime-display">—</div>
+</div>
+
+<!-- Rich text toolbar (edit mode) -->
+<div class="editor-toolbar" id="editor-toolbar">
+  <select class="toolbar-select" onchange="execFormat('fontName',this.value)" title="Font">
+    <option value="Sora">Sora</option>
+    <option value="JetBrains Mono">Mono</option>
+    <option value="Georgia">Serif</option>
+    <option value="Arial">Arial</option>
+  </select>
+  <div class="toolbar-sep"></div>
+  <button class="toolbar-btn" onclick="decreaseFontSize()" title="Decrease font size">A-</button>
+  <input class="toolbar-select" style="width:36px;text-align:center" id="font-size-input" type="number" value="14" min="8" max="48" onchange="applyFontSize(this.value)" title="Font size">
+  <button class="toolbar-btn" onclick="increaseFontSize()" title="Increase font size">A+</button>
+  <div class="toolbar-sep"></div>
+  <button class="toolbar-btn" id="btn-bold" onclick="execFormat('bold')" title="Bold"><b>B</b></button>
+  <button class="toolbar-btn" id="btn-italic" onclick="execFormat('italic')" title="Italic"><i>I</i></button>
+  <button class="toolbar-btn" id="btn-underline" onclick="execFormat('underline')" title="Underline"><u>U</u></button>
+  <button class="toolbar-btn" id="btn-strike" onclick="execFormat('strikethrough')" title="Strikethrough"><s>S</s></button>
+  <div class="toolbar-sep"></div>
+  <button class="toolbar-btn" onclick="execFormat('insertUnorderedList')" title="Bullet list">• List</button>
+  <button class="toolbar-btn" onclick="execFormat('insertOrderedList')" title="Numbered list">1. List</button>
+  <button class="toolbar-btn" onclick="insertCheckbox()" title="Checkbox">☑</button>
+  <div class="toolbar-sep"></div>
+  <button class="toolbar-btn" onclick="execFormat('justifyLeft')" title="Align left">⬤L</button>
+  <button class="toolbar-btn" onclick="execFormat('justifyCenter')" title="Align center">⬤C</button>
+  <button class="toolbar-btn" onclick="execFormat('justifyRight')" title="Align right">⬤R</button>
+</div>
+
+<!-- Editor -->
+<div class="note-editor-wrap" id="note-editor-wrap">
+  <div id="note-editor" contenteditable="true" spellcheck="true"
+    oninput="scheduleAutosave()" onkeyup="updateToolbarState()"></div>
+</div>
+
+<!-- View -->
+<div id="note-view-content" style="display:none"></div>
+```
+
+  </div>
+</div>
+
+<!-- Toast -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+window._firebase = { initializeApp, getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy };
+</script>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let notes = []; // [{id, heading, body, bodyText, priority, participants, createdAt, updatedAt}]
+let currentNote = null;
+let editMode = false;
+let autoSaveTimer = null;
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let db = null;
+let notesRef = null;
+let unsubscribe = null;
+let currentPage = 'home';
+let participants = [];
+let lastClickTime = 0;
+let lastClickId = null;
+let savedFontSize = 14;
+
+// ═══════════════════════════════════════════════
+// FIREBASE SETUP
+// ═══════════════════════════════════════════════
+async function initFirebase() {
+  const cfg = {
+    apiKey: document.getElementById('fb-apiKey').value.trim(),
+    authDomain: document.getElementById('fb-authDomain').value.trim(),
+    projectId: document.getElementById('fb-projectId').value.trim(),
+    appId: document.getElementById('fb-appId').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.projectId) { showToast('Please fill in API Key and Project ID'); return; }
+  try {
+    const { initializeApp, getFirestore, collection, query, orderBy, onSnapshot } = window._firebase;
+    const app = initializeApp(cfg);
+    db = getFirestore(app);
+    notesRef = collection(db, 'notes');
+    localStorage.setItem('notesync_fb_config', JSON.stringify(cfg));
+    startFirestoreSync();
+    document.getElementById('sync-status').textContent = '🔥 synced';
+    document.getElementById('firebase-setup').style.display = 'none';
+    renderAll();
+    showToast('Connected to Firebase!');
+  } catch(e) {
+    showToast('Firebase error: ' + e.message);
+  }
+}
+
+function startFirestoreSync() {
+  const { query, orderBy, onSnapshot } = window._firebase;
+  if (unsubscribe) unsubscribe();
+  const q = query(notesRef, orderBy('createdAt', 'desc'));
+  unsubscribe = onSnapshot(q, snap => {
+    notes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    notes.sort((a,b) => b.createdAt - a.createdAt);
+    renderAll();
+  });
+}
+
+function skipFirebase() {
+  document.getElementById('firebase-setup').style.display = 'none';
+  loadLocalNotes();
+  renderAll();
+}
+
+// Try auto-connect saved config
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('notesync_fb_config');
+  if (saved) {
+    const cfg = JSON.parse(saved);
+    document.getElementById('fb-apiKey').value = cfg.apiKey || '';
+    document.getElementById('fb-authDomain').value = cfg.authDomain || '';
+    document.getElementById('fb-projectId').value = cfg.projectId || '';
+    document.getElementById('fb-appId').value = cfg.appId || '';
+    // auto-init
+    setTimeout(initFirebase, 300);
+  }
+  // Load theme
+  const theme = localStorage.getItem('notesync_theme') || 'light';
+  setTheme(theme);
+});
+
+// ═══════════════════════════════════════════════
+// LOCAL STORAGE FALLBACK
+// ═══════════════════════════════════════════════
+function loadLocalNotes() {
+  const raw = localStorage.getItem('notesync_notes');
+  notes = raw ? JSON.parse(raw) : [];
+  notes.sort((a,b) => b.createdAt - a.createdAt);
+}
+
+function saveLocal() {
+  localStorage.setItem('notesync_notes', JSON.stringify(notes));
+}
+
+// ═══════════════════════════════════════════════
+// NOTE CRUD
+// ═══════════════════════════════════════════════
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function saveNote(note) {
+  const idx = notes.findIndex(n => n.id === note.id);
+  if (idx >= 0) notes[idx] = note; else notes.unshift(note);
+  notes.sort((a,b) => b.createdAt - a.createdAt);
+  if (db && notesRef) {
+    const { doc, setDoc } = window._firebase;
+    setDoc(doc(notesRef, note.id), note).catch(console.error);
+  } else {
+    saveLocal();
+    renderAll();
+  }
+  showSaveStatus('Saved ✓');
+}
+
+async function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  if (db && notesRef) {
+    const { doc, deleteDoc } = window._firebase;
+    await deleteDoc(doc(notesRef, id)).catch(console.error);
+  } else {
+    saveLocal();
+    renderAll();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// AUTO SAVE
+// ═══════════════════════════════════════════════
+function scheduleAutosave() {
+  showSaveStatus('Saving…');
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(doAutosave, 1000);
+}
+
+function doAutosave() {
+  if (!currentNote) return;
+  const editor = document.getElementById('note-editor');
+  currentNote.heading = document.getElementById('meta-heading').value.trim();
+  currentNote.priority = document.getElementById('meta-priority').value;
+  currentNote.participants = [...participants];
+  currentNote.body = editor.innerHTML;
+  currentNote.bodyText = editor.innerText;
+  currentNote.updatedAt = Date.now();
+  saveNote(currentNote);
+}
+
+// ═══════════════════════════════════════════════
+// OPEN / CLOSE NOTES
+// ═══════════════════════════════════════════════
+function openNewNote() {
+  currentNote = {
+    id: generateId(),
+    heading: '',
+    body: '',
+    bodyText: '',
+    priority: '',
+    participants: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  editMode = true;
+  openModal();
+}
+
+function openNoteById(id, forceEdit = false) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  currentNote = { ...note };
+  editMode = forceEdit;
+  openModal();
+}
+
+function openModal() {
+  participants = [...(currentNote.participants || [])];
+  document.getElementById('meta-heading').value = currentNote.heading || '';
+  document.getElementById('meta-priority').value = currentNote.priority || '';
+  document.getElementById('note-editor').innerHTML = currentNote.body || '';
+  renderParticipants();
+
+  const dt = new Date(currentNote.createdAt);
+  document.getElementById('note-datetime-display').textContent =
+    dt.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+    dt.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+
+  setModalEditMode(editMode);
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (editMode) document.getElementById('note-editor').focus();
+}
+
+function closeNote() {
+  clearTimeout(autoSaveTimer);
+  if (currentNote && editMode) doAutosave();
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentNote = null;
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeNote();
+}
+
+function setModalEditMode(isEdit) {
+  editMode = isEdit;
+  const editor = document.getElementById('note-editor');
+  const viewEl = document.getElementById('note-view-content');
+  const toolbar = document.getElementById('editor-toolbar');
+  const wrap = document.getElementById('note-editor-wrap');
+  const btn = document.getElementById('view-edit-btn');
+
+  if (isEdit) {
+    toolbar.style.display = 'flex';
+    wrap.style.display = '';
+    viewEl.style.display = 'none';
+    editor.contentEditable = 'true';
+    btn.title = 'View mode';
+    btn.textContent = '👁️';
+    editor.focus();
+  } else {
+    toolbar.style.display = 'none';
+    wrap.style.display = 'none';
+    viewEl.style.display = '';
+    viewEl.innerHTML = highlightKeyword(currentNote.body || '', lastSearchQuery);
+    btn.title = 'Edit';
+    btn.textContent = '✏️';
+    // make checkboxes interactive in view
+    viewEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.onchange = () => {
+        const item = cb.closest('.checkbox-item');
+        if (item) item.classList.toggle('checked', cb.checked);
+      };
+    });
+  }
+}
+
+function toggleViewEdit() {
+  if (editMode) {
+    doAutosave();
+    editMode = false;
+    setModalEditMode(false);
+  } else {
+    editMode = true;
+    setModalEditMode(true);
+  }
+}
+
+function deleteCurrentNote() {
+  if (!currentNote) return;
+  if (!confirm('Delete this note?')) return;
+  deleteNote(currentNote.id);
+  closeNote();
+  showToast('Note deleted');
+}
+
+// ═══════════════════════════════════════════════
+// NOTE ROW CLICK (single = view, double = edit on mobile)
+// ═══════════════════════════════════════════════
+function handleNoteClick(id) {
+  const now = Date.now();
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile) {
+    if (lastClickId === id && now - lastClickTime < 400) {
+      openNoteById(id, true); // double tap → edit
+    } else {
+      openNoteById(id, false); // single tap → view
+    }
+  } else {
+    openNoteById(id, false); // web → popup view
+  }
+  lastClickTime = now;
+  lastClickId = id;
+}
+
+// ═══════════════════════════════════════════════
+// RICH TEXT EDITOR
+// ═══════════════════════════════════════════════
+function execFormat(cmd, val) {
+  document.getElementById('note-editor').focus();
+  document.execCommand(cmd, false, val || null);
+  updateToolbarState();
+  scheduleAutosave();
+}
+
+function updateToolbarState() {
+  ['bold','italic','underline','strikethrough'].forEach(cmd => {
+    const btn = document.getElementById('btn-' + (cmd === 'strikethrough' ? 'strike' : cmd));
+    if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+  });
+}
+
+function insertCheckbox() {
+  const editor = document.getElementById('note-editor');
+  editor.focus();
+  const div = document.createElement('div');
+  div.className = 'checkbox-item';
+  div.innerHTML = '<input type="checkbox"><span>&nbsp;Task item</span>';
+  div.querySelector('input').addEventListener('change', function() {
+    div.classList.toggle('checked', this.checked);
+    scheduleAutosave();
+  });
+  const sel = window.getSelection();
+  if (sel.rangeCount) {
+    const range = sel.getRangeAt(0);
+    range.collapse(false);
+    range.insertNode(div);
+    range.setStartAfter(div);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    editor.appendChild(div);
+  }
+  scheduleAutosave();
+}
+
+function increaseFontSize() {
+  savedFontSize = Math.min(savedFontSize + 2, 48);
+  document.getElementById('font-size-input').value = savedFontSize;
+  applyFontSize(savedFontSize);
+}
+function decreaseFontSize() {
+  savedFontSize = Math.max(savedFontSize - 2, 8);
+  document.getElementById('font-size-input').value = savedFontSize;
+  applyFontSize(savedFontSize);
+}
+function applyFontSize(size) {
+  document.getElementById('note-editor').focus();
+  document.execCommand('fontSize', false, '7');
+  document.getElementById('note-editor').querySelectorAll('font[size="7"]').forEach(el => {
+    el.removeAttribute('size');
+    el.style.fontSize = size + 'px';
+  });
+  scheduleAutosave();
+}
+
+// ═══════════════════════════════════════════════
+// PARTICIPANTS
+// ═══════════════════════════════════════════════
+function handleParticipantKey(e) {
+  const input = e.target;
+  if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+    e.preventDefault();
+    const name = input.value.trim().replace(/,$/, '');
+    if (name && !participants.includes(name)) {
+      participants.push(name);
+      renderParticipants();
+      scheduleAutosave();
+    }
+    input.value = '';
+  } else if (e.key === 'Backspace' && !input.value && participants.length) {
+    participants.pop();
+    renderParticipants();
+    scheduleAutosave();
+  }
+}
+
+function removeParticipant(name) {
+  participants = participants.filter(p => p !== name);
+  renderParticipants();
+  scheduleAutosave();
+}
+
+function renderParticipants() {
+  const wrap = document.getElementById('participants-wrap');
+  const input = document.getElementById('participant-input');
+  wrap.querySelectorAll('.participant-tag').forEach(t => t.remove());
+  participants.forEach(p => {
+    const tag = document.createElement('span');
+    tag.className = 'participant-tag';
+    tag.innerHTML = `${p}<span class="remove-tag" onclick="removeParticipant('${p}')">✕</span>`;
+    wrap.insertBefore(tag, input);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SAVE STATUS
+// ═══════════════════════════════════════════════
+function showSaveStatus(msg) {
+  document.getElementById('save-status').textContent = '● ' + msg;
+}
+
+// ═══════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════
+let lastSearchQuery = '';
+let searchDebounce = null;
+
+function handleSearch(q) {
+  q = q.trim();
+  lastSearchQuery = q;
+  document.getElementById('search-clear').style.display = q ? 'flex' : 'none';
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    if (q) showSearchPage(q);
+    else exitSearch();
+  }, 200);
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  lastSearchQuery = '';
+  document.getElementById('search-clear').style.display = 'none';
+  exitSearch();
+}
+
+function showSearchPage(q) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-search').classList.add('active');
+  currentPage = 'search';
+
+  const lower = q.toLowerCase();
+  const matched = notes.filter(n =>
+    (n.heading || '').toLowerCase().includes(lower) ||
+    (n.bodyText || '').toLowerCase().includes(lower) ||
+    (n.priority || '').toLowerCase().includes(lower) ||
+    (n.participants || []).some(p => p.toLowerCase().includes(lower))
+  );
+
+  document.getElementById('search-count').textContent =
+    matched.length + ' result' + (matched.length !== 1 ? 's' : '') + ' for "' + q + '"';
+
+  const wrap = document.getElementById('search-results-wrap');
+  if (!matched.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><h3>No notes found</h3><p>Try a different keyword</p></div>`;
+    return;
+  }
+  wrap.innerHTML = matched.map(n => renderNoteRow(n, q)).join('');
+}
+
+function exitSearch() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + currentPage === 'search' ? 'home' : currentPage).classList.add('active');
+  if (currentPage === 'search') { currentPage = 'home'; }
+  document.getElementById('page-' + currentPage).classList.add('active');
+}
+
+function highlightKeyword(text, kw) {
+  if (!kw || !text) return text || '';
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="hl">$1</mark>');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER NOTE ROW
+// ═══════════════════════════════════════════════
+function renderNoteRow(note, searchKw = '') {
+  const dt = new Date(note.createdAt);
+  const dateStr = dt.toLocaleDateString('en-IN', {day:'2-digit',month:'short'});
+  const timeStr = dt.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+
+  const heading = searchKw ? highlightKeyword(escHtml(note.heading || 'Untitled'), searchKw) : escHtml(note.heading || '');
+  const body = searchKw ? highlightKeyword(escHtml(stripHtml(note.body || '')), searchKw) : escHtml(stripHtml(note.body || ''));
+  const priority = note.priority ? `<span class="priority-badge ${note.priority}">${note.priority}</span>` : '';
+  const parts = (note.participants || []).map(p =>
+    `<span class="participant-chip">${searchKw ? highlightKeyword(escHtml(p), searchKw) : escHtml(p)}</span>`
+  ).join('');
+
+  return `
+  <div class="note-row" onclick="handleNoteClick('${note.id}')">
+    <div class="note-row-top">
+      <div class="note-row-heading">${heading || '<span style="color:var(--text-muted);font-weight:400">Untitled</span>'}</div>
+      <div class="note-row-meta">
+        ${priority}
+        <span class="note-row-datetime">${dateStr} ${timeStr}</span>
+      </div>
+    </div>
+    <div class="note-row-body">${body}</div>
+    ${parts ? `<div class="note-row-participants">👥 ${parts}</div>` : ''}
+  </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.innerText || '';
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════
+function renderAll() {
+  renderCalendar();
+  renderNotesList();
+}
+
+// ═══════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════
+function renderCalendar() {
+  const today = new Date();
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth + 1, 0);
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent = monthNames[calMonth] + ' ' + calYear;
+
+  // Count notes per day
+  const notesPerDay = {};
+  notes.forEach(n => {
+    const d = new Date(n.createdAt);
+    if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
+      const key = d.getDate();
+      notesPerDay[key] = (notesPerDay[key] || 0) + 1;
+    }
+  });
+
+  const grid = document.getElementById('cal-days');
+  grid.innerHTML = '';
+
+  // Blank cells before first day
+  for (let i = 0; i < firstDay.getDay(); i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-day empty';
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const isToday = today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === d;
+    const count = notesPerDay[d] || 0;
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (isToday ? ' today' : '') + (count ? ' has-notes' : '');
+    cell.innerHTML = `<span class="cal-day-num">${d}</span>` +
+      (count ? `<span class="cal-day-dot">${count}</span>` : '');
+    if (count) {
+      cell.onclick = () => showDayModal(d);
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+// ═══════════════════════════════════════════════
+// DAY MODAL
+// ═══════════════════════════════════════════════
+function showDayModal(day) {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('day-modal-title').textContent = day + ' ' + monthNames[calMonth] + ' ' + calYear;
+  const dayNotes = notes.filter(n => {
+    const d = new Date(n.createdAt);
+    return d.getFullYear() === calYear && d.getMonth() === calMonth && d.getDate() === day;
+  });
+  const list = document.getElementById('day-modal-list');
+  list.innerHTML = dayNotes.length
+    ? dayNotes.map(n => renderNoteRow(n)).join('')
+    : '<div class="empty-state" style="padding:24px"><div class="empty-icon">📭</div><p>No notes this day</p></div>';
+  document.getElementById('day-modal-overlay').classList.add('open');
+}
+
+function closeDayModal(e) {
+  if (!e || e.target === document.getElementById('day-modal-overlay')) {
+    document.getElementById('day-modal-overlay').classList.remove('open');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NOTES LIST (grouped by month)
+// ═══════════════════════════════════════════════
+function renderNotesList() {
+  const wrap = document.getElementById('notes-list-wrap');
+  if (!notes.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📓</div><h3>No notes yet</h3><p>Tap ＋ to create your first note</p></div>`;
+    return;
+  }
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const grouped = {};
+  notes.forEach(n => {
+    const d = new Date(n.createdAt);
+    const key = monthNames[d.getMonth()] + ' ' + d.getFullYear();
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(n);
+  });
+
+  wrap.innerHTML = Object.entries(grouped).map(([month, mNotes]) => `
+    <div class="month-group">
+      <div class="month-group-header">${month} · ${mNotes.length} note${mNotes.length !== 1 ? 's' : ''}</div>
+      ${mNotes.map(n => renderNoteRow(n)).join('')}
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function showPage(page, el) {
+  currentPage = page;
+  clearSearch();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-backdrop').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+}
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('notesync_theme', theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (theme === 'dark') btn.classList.add('on'); else btn.classList.remove('on');
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('open')) {
+    closeNote();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    e.preventDefault(); openNewNote();
+  }
+});
+
+// ═══════════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  // Re-check sidebar state on resize
+  if (window.innerWidth > 640) closeSidebar();
+});
+</script>
+
+</body>
+</html>
