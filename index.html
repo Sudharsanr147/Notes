@@ -20,18 +20,22 @@
 
     <div class="max-w-6xl mx-auto p-4">
         <header class="flex justify-between items-center py-6">
-            <div>
-                <h1 class="text-2xl font-extrabold text-blue-700 dark:text-blue-400">Project Studio</h1>
-            </div>
-            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700">
+            <h1 class="text-2xl font-extrabold text-blue-700 dark:text-blue-400">Project Studio</h1>
+            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 shadow-sm active:scale-95 transition-transform">
                 <span id="dark-icon">🌙</span>
             </button>
         </header>
 
-        <nav class="flex space-x-1 bg-gray-200 dark:bg-gray-800 p-1 rounded-xl mb-6 overflow-x-auto">
-            <button onclick="showSection('add')" class="nav-btn flex-1 py-2 px-4 rounded-lg font-medium whitespace-nowrap" id="btn-add">Add Note</button>
-            <button onclick="showSection('table')" class="nav-btn flex-1 py-2 px-4 rounded-lg font-medium whitespace-nowrap" id="btn-table">Reports</button>
-            <button onclick="showSection('config')" class="nav-btn flex-1 py-2 px-4 rounded-lg font-medium whitespace-nowrap" id="btn-config">Manage Structure</button>
+        <nav class="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-xl mb-6 shadow-inner">
+            <button onclick="showSection('add')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm transition-all bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" id="btn-add">
+                Add Note
+            </button>
+            <button onclick="showSection('table')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all" id="btn-table">
+                Reports
+            </button>
+            <button onclick="showSection('config')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all" id="btn-config">
+                Manage
+            </button>
         </nav>
 
         <main id="add-section" class="section active space-y-4">
@@ -50,27 +54,29 @@
                         <select id="noteSubBranch" class="w-full border p-3 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none"></select>
                     </div>
                 </div>
-                <textarea id="noteInput" rows="5" class="w-full border p-4 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none mb-4" placeholder="Note content..."></textarea>
-                <button onclick="saveNote()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all">Save Note</button>
+                <textarea id="noteInput" rows="5" class="w-full border p-4 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none mb-4" placeholder="Write your note here..."></textarea>
+                <button onclick="saveNote()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]">Save Note</button>
             </div>
         </main>
 
         <section id="table-section" class="section space-y-4">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <select id="filterProj" onchange="renderTable()" class="border p-2 rounded-lg dark:bg-gray-700"><option value="">All Projects</option></select>
-                    <select id="filterBranch" onchange="renderTable()" class="border p-2 rounded-lg dark:bg-gray-700"><option value="">All Branches</option></select>
-                    <select id="filterSub" onchange="renderTable()" class="border p-2 rounded-lg dark:bg-gray-700"><option value="">All Sub-Branches</option></select>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border dark:border-gray-700">
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <select id="filterProj" onchange="syncBranches('filter'); renderTable();" class="text-xs border p-2 rounded-lg dark:bg-gray-700 outline-none"></select>
+                    <select id="filterBranch" onchange="syncSubBranches('filter'); renderTable();" class="text-xs border p-2 rounded-lg dark:bg-gray-700 outline-none"></select>
+                    <select id="filterSubBranch" onchange="renderTable()" class="text-xs border p-2 rounded-lg dark:bg-gray-700 outline-none"></select>
                 </div>
+                <button onclick="exportToHTML()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 rounded-lg transition-all">
+                    📥 Export Filtered Notes for AI Analysis
+                </button>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-700 text-left">
-                                <th class="p-4 w-1/4">Context</th>
-                                <th class="p-4 w-1/2">Note</th>
-                                <th class="p-4 w-1/4 text-center">Actions</th>
+                            <tr class="bg-gray-50 dark:bg-gray-700 text-left opacity-70">
+                                <th class="p-4 w-1/3">Context</th>
+                                <th class="p-4 w-2/3">Note</th>
                             </tr>
                         </thead>
                         <tbody id="notesTableBody" class="divide-y dark:divide-gray-700"></tbody>
@@ -81,25 +87,31 @@
 
         <section id="config-section" class="section space-y-6">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700">
-                <h2 class="font-bold mb-4">Manage Hierarchy</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-2">
-                        <input id="newProj" type="text" placeholder="Project Name" class="w-full border p-2 rounded dark:bg-gray-700">
-                        <button onclick="addItem('projects')" class="w-full bg-green-600 text-white p-2 rounded">+ Add Project</button>
-                        <div id="projList" class="max-h-40 overflow-y-auto space-y-1"></div>
+                <h2 class="font-bold mb-4 text-blue-600">Structure Hierarchy</h2>
+                <div class="space-y-8">
+                    <div>
+                        <div class="flex space-x-2 mb-2">
+                            <input id="newProj" type="text" placeholder="New Project" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
+                            <button onclick="addItem('projects')" class="bg-green-600 text-white px-4 rounded-lg font-bold">+</button>
+                        </div>
+                        <div id="projList" class="grid grid-cols-1 gap-2"></div>
                     </div>
-                    <div class="space-y-2 border-l pl-4 dark:border-gray-700">
-                        <select id="parentProj" class="w-full border p-2 rounded dark:bg-gray-700"></select>
-                        <input id="newBranch" type="text" placeholder="Branch Name" class="w-full border p-2 rounded dark:bg-gray-700">
-                        <button onclick="addItem('branches')" class="w-full bg-green-600 text-white p-2 rounded">+ Add Branch</button>
-                        <div id="branchList" class="max-h-40 overflow-y-auto space-y-1"></div>
+                    <div class="border-t pt-4 dark:border-gray-700">
+                        <select id="parentProj" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
+                        <div class="flex space-x-2 mb-2">
+                            <input id="newBranch" type="text" placeholder="New Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
+                            <button onclick="addItem('branches')" class="bg-green-600 text-white px-4 rounded-lg font-bold">+</button>
+                        </div>
+                        <div id="branchList" class="grid grid-cols-1 gap-2"></div>
                     </div>
-                    <div class="space-y-2 border-l pl-4 dark:border-gray-700">
-                        <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch')" class="w-full border p-2 rounded dark:bg-gray-700"></select>
-                        <select id="parentBranch" class="w-full border p-2 rounded dark:bg-gray-700"></select>
-                        <input id="newSub" type="text" placeholder="Sub-Branch" class="w-full border p-2 rounded dark:bg-gray-700">
-                        <button onclick="addItem('subs')" class="w-full bg-green-600 text-white p-2 rounded">+ Add Sub</button>
-                        <div id="subList" class="max-h-40 overflow-y-auto space-y-1"></div>
+                    <div class="border-t pt-4 dark:border-gray-700">
+                        <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch')" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
+                        <select id="parentBranch" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
+                        <div class="flex space-x-2 mb-2">
+                            <input id="newSub" type="text" placeholder="New Sub-Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
+                            <button onclick="addItem('subs')" class="bg-green-600 text-white px-4 rounded-lg font-bold">+</button>
+                        </div>
+                        <div id="subList" class="grid grid-cols-1 gap-2"></div>
                     </div>
                 </div>
             </div>
@@ -122,30 +134,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- GLOBAL STATE ---
         let allProjs = [], allBranches = [], allSubs = [], allNotes = [];
 
-        // --- REALTIME SYNC ---
-        onSnapshot(collection(db, "projects"), (s) => { 
-            allProjs = s.docs.map(d => ({id: d.id, ...d.data()})); 
-            updateUI(); 
-        });
-        onSnapshot(collection(db, "branches"), (s) => { 
-            allBranches = s.docs.map(d => ({id: d.id, ...d.data()})); 
-            updateUI(); 
-        });
-        onSnapshot(collection(db, "subs"), (s) => { 
-            allSubs = s.docs.map(d => ({id: d.id, ...d.data()})); 
-            updateUI(); 
-        });
-        onSnapshot(query(collection(db, "notes"), orderBy("createdAt", "desc")), (s) => {
-            allNotes = s.docs.map(d => ({id: d.id, ...d.data()}));
-            renderTable();
-        });
+        onSnapshot(collection(db, "projects"), (s) => { allProjs = s.docs.map(d => ({id: d.id, ...d.data()})); updateUI(); });
+        onSnapshot(collection(db, "branches"), (s) => { allBranches = s.docs.map(d => ({id: d.id, ...d.data()})); updateUI(); });
+        onSnapshot(collection(db, "subs"), (s) => { allSubs = s.docs.map(d => ({id: d.id, ...d.data()})); updateUI(); });
+        onSnapshot(query(collection(db, "notes"), orderBy("createdAt", "desc")), (s) => { allNotes = s.docs.map(d => ({id: d.id, ...d.data()})); renderTable(); });
 
-        // --- CRUD LOGIC ---
         window.addItem = async (type) => {
-            let data = {};
             if(type === 'projects') {
                 const name = document.getElementById('newProj').value;
                 if(!name) return;
@@ -154,30 +150,24 @@
                 document.getElementById('newProj').value = '';
             } else if(type === 'branches') {
                 const name = document.getElementById('newBranch').value;
-                const parentId = document.getElementById('parentProj').value;
+                const pName = document.getElementById('parentProj').value;
+                const parentId = allProjs.find(p => p.name === pName)?.id;
                 if(!name || !parentId) return;
                 const bDoc = await addDoc(collection(db, "branches"), { name, parentId });
                 await addDoc(collection(db, "subs"), { name: "General", parentId: bDoc.id });
                 document.getElementById('newBranch').value = '';
             } else if(type === 'subs') {
                 const name = document.getElementById('newSub').value;
-                const parentId = document.getElementById('parentBranch').value;
+                const bName = document.getElementById('parentBranch').value;
+                const parentId = allBranches.find(b => b.name === bName)?.id;
                 if(!name || !parentId) return;
                 await addDoc(collection(db, "subs"), { name, parentId });
                 document.getElementById('newSub').value = '';
             }
         };
 
-        window.deleteItem = async (type, id) => {
-            if(confirm("Are you sure? This will not delete child items, but they will become unlinked.")) {
-                await deleteDoc(doc(db, type, id));
-            }
-        };
-
-        window.editItem = async (type, id, oldName) => {
-            const newName = prompt("Enter new name:", oldName);
-            if(newName) await updateDoc(doc(db, type, id), { name: newName });
-        };
+        window.deleteItem = async (t, id) => { if(confirm("Delete?")) await deleteDoc(doc(db, t, id)); };
+        window.editItem = async (t, id, old) => { const n = prompt("Edit:", old); if(n) await updateDoc(doc(db, t, id), { name: n }); };
 
         window.saveNote = async () => {
             const text = document.getElementById('noteInput').value;
@@ -190,24 +180,18 @@
                 createdAt: serverTimestamp()
             });
             document.getElementById('noteInput').value = '';
-            alert("Note Saved");
         };
 
-        window.deleteNote = async (id) => {
-            if(confirm("Delete note?")) await deleteDoc(doc(db, "notes", id));
-        };
+        window.deleteNote = async (id) => { if(confirm("Delete note?")) await deleteDoc(doc(db, "notes", id)); };
 
-        // --- UI HELPERS ---
         function updateUI() {
             fillDrop('noteProj', allProjs);
             fillDrop('parentProj', allProjs);
             fillDrop('parentBranchProj', allProjs);
             fillDrop('filterProj', allProjs, true);
-            
             syncBranches('note');
             syncBranches('filter');
             updateBranchDrop('parentBranch');
-            
             renderList('projList', allProjs, 'projects');
             renderList('branchList', allBranches, 'branches');
             renderList('subList', allSubs, 'subs');
@@ -225,59 +209,111 @@
             const bName = document.getElementById(prefix + 'Branch').value;
             const bId = allBranches.find(b => b.name === bName)?.id;
             const filtered = allSubs.filter(s => s.parentId === bId);
-            fillDrop(prefix + 'SubBranch', filtered, prefix === 'filter');
+            fillDrop(prefix + (prefix === 'filter' ? 'SubBranch' : 'SubBranch'), filtered, prefix === 'filter');
         };
 
         window.updateBranchDrop = (targetId) => {
-            const pId = document.getElementById('parentBranchProj').value;
-            const filtered = allBranches.filter(b => b.parentId === (allProjs.find(p => p.name === pId)?.id));
-            const select = document.getElementById(targetId);
-            select.innerHTML = filtered.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            const pName = document.getElementById('parentBranchProj').value;
+            const pId = allProjs.find(p => p.name === pName)?.id;
+            const filtered = allBranches.filter(b => b.parentId === pId);
+            fillDrop(targetId, filtered);
         };
 
         function fillDrop(id, list, allOpt = false) {
             const el = document.getElementById(id);
             if(!el) return;
-            let html = allOpt ? `<option value="">All</option>` : '';
-            html += list.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
-            el.innerHTML = html;
+            el.innerHTML = (allOpt ? '<option value="">All</option>' : '') + list.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
         }
 
         function renderList(id, list, type) {
             document.getElementById(id).innerHTML = list.map(i => `
-                <div class="flex justify-between items-center text-xs p-1 bg-gray-100 dark:bg-gray-700 rounded">
+                <div class="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
                     <span>${i.name}</span>
-                    <div class="flex space-x-1">
+                    <div class="space-x-2">
                         <button onclick="editItem('${type}','${i.id}','${i.name}')">✏️</button>
                         <button onclick="deleteItem('${type}','${i.id}')">🗑️</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         window.renderTable = () => {
             const fP = document.getElementById('filterProj').value;
             const fB = document.getElementById('filterBranch').value;
             const fS = document.getElementById('filterSubBranch').value;
+            const filtered = allNotes.filter(n => (!fP || n.project === fP) && (!fB || n.branch === fB) && (!fS || n.subBranch === fS));
+            document.getElementById('notesTableBody').innerHTML = filtered.map(n => `
+                <tr class="align-top">
+                    <td class="p-4 border-r dark:border-gray-700">
+                        <div class="font-bold text-blue-600 text-xs">${n.project}</div>
+                        <div class="text-[9px] opacity-50">${n.branch} > ${n.subBranch}</div>
+                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-2 block">Delete</button>
+                    </td>
+                    <td class="p-4 text-gray-700 dark:text-gray-300 leading-relaxed">${n.text}</td>
+                </tr>`).join('');
+        };
 
+        // EXPORT FUNCTIONALITY
+        window.exportToHTML = () => {
+            const fP = document.getElementById('filterProj').value || "All Projects";
+            const fB = document.getElementById('filterBranch').value || "All Branches";
+            const fS = document.getElementById('filterSubBranch').value || "All Sub-Branches";
+            
             const filtered = allNotes.filter(n => 
-                (!fP || n.project === fP) && 
-                (!fB || n.branch === fB) && 
-                (!fS || n.subBranch === fS)
+                (!document.getElementById('filterProj').value || n.project === document.getElementById('filterProj').value) && 
+                (!document.getElementById('filterBranch').value || n.branch === document.getElementById('filterBranch').value) && 
+                (!document.getElementById('filterSubBranch').value || n.subBranch === document.getElementById('filterSubBranch').value)
             );
 
-            document.getElementById('notesTableBody').innerHTML = filtered.map(n => `
+            if (filtered.length === 0) return alert("No data to export!");
+
+            let rows = filtered.map(n => `
                 <tr>
-                    <td class="p-4 border-r dark:border-gray-700">
-                        <div class="font-bold text-blue-600 dark:text-blue-400">${n.project}</div>
-                        <div class="text-[10px] opacity-60">${n.branch} > ${n.subBranch}</div>
-                    </td>
-                    <td class="p-4 break-words text-gray-700 dark:text-gray-300">${n.text}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="deleteNote('${n.id}')" class="text-red-500">Delete</button>
-                    </td>
+                    <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">${n.project}</td>
+                    <td style="border: 1px solid #ddd; padding: 12px;">${n.branch}</td>
+                    <td style="border: 1px solid #ddd; padding: 12px;">${n.subBranch}</td>
+                    <td style="border: 1px solid #ddd; padding: 12px; line-height: 1.6;">${n.text}</td>
                 </tr>
             `).join('');
+
+            const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Project Notes Export - ${fP}</title>
+                <style>
+                    body { font-family: sans-serif; padding: 40px; color: #333; }
+                    h1 { color: #1d4ed8; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th { background: #f3f4f6; text-align: left; padding: 12px; border: 1px solid #ddd; }
+                </style>
+            </head>
+            <body>
+                <h1>Project Report: ${fP}</h1>
+                <p><strong>Filter Context:</strong> ${fB} / ${fS}</p>
+                <p><em>Exported on: ${new Date().toLocaleString()}</em></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Branch</th>
+                            <th>Sub-Branch</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </body>
+            </html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Project_Report_${fP.replace(/\s+/g, '_')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         };
     </script>
 
@@ -286,17 +322,17 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id + '-section').classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600');
+                b.classList.remove('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600', 'dark:text-blue-400');
+                b.classList.add('text-gray-600', 'dark:text-gray-400');
             });
-            document.getElementById('btn-' + id).classList.add('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600');
+            const btn = document.getElementById('btn-' + id);
+            btn.classList.add('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600', 'dark:text-blue-400');
+            btn.classList.remove('text-gray-600', 'dark:text-gray-400');
         }
-
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            document.getElementById('dark-icon').innerText = isDark ? '☀️' : '🌙';
+            document.getElementById('dark-icon').innerText = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
         }
-
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
     </script>
 </body>
