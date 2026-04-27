@@ -6,69 +6,101 @@
     <title>Project Notes Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        .section { display: none; }
+        .section.active { display: block; }
+        table { table-layout: fixed; width: 100%; }
+        td { word-wrap: break-word; white-space: normal; }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-200">
 
-    <div class="max-w-5xl mx-auto p-4">
-        <header class="text-center py-6">
-            <h1 class="text-3xl font-extrabold text-blue-700">Project Note Studio</h1>
-            <p class="text-gray-500 text-sm mt-1">Cloud-Synced Project Management</p>
+    <div class="max-w-6xl mx-auto p-4">
+        <header class="flex justify-between items-center py-6">
+            <div>
+                <h1 class="text-2xl font-extrabold text-blue-700 dark:text-blue-400">Project Studio</h1>
+            </div>
+            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700">
+                <span id="dark-icon">🌙</span>
+            </button>
         </header>
 
-        <nav class="flex space-x-1 bg-gray-200 p-1 rounded-xl mb-6">
-            <button onclick="showSection('add')" class="nav-btn flex-1 py-2 rounded-lg font-medium bg-white shadow-sm" id="btn-add">Add Note</button>
-            <button onclick="showSection('table')" class="nav-btn flex-1 py-2 rounded-lg font-medium text-gray-600" id="btn-table">All Notes</button>
-            <button onclick="showSection('config')" class="nav-btn flex-1 py-2 rounded-lg font-medium text-gray-600" id="btn-config">Setup Projects</button>
+        <nav class="flex space-x-1 bg-gray-200 dark:bg-gray-800 p-1 rounded-xl mb-6 overflow-x-auto">
+            <button onclick="showSection('add')" class="nav-btn flex-1 py-2 px-4 rounded-lg font-medium whitespace-nowrap" id="btn-add">Add Note</button>
+            <button onclick="showSection('table')" class="nav-btn flex-1 py-2 px-4 rounded-lg font-medium whitespace-nowrap" id="btn-table">Reports</button>
+            <button onclick="showSection('config')" class="nav-btn flex-1 py-2 px-4 rounded-lg font-medium whitespace-nowrap" id="btn-config">Manage Structure</button>
         </nav>
 
-        <main id="add-section" class="section space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <main id="add-section" class="section active space-y-4">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Project</label>
-                        <select id="projSelect" onchange="loadBranches()" class="w-full border-gray-200 border p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                        <label class="block text-xs font-bold uppercase mb-1 opacity-60">Project</label>
+                        <select id="noteProj" onchange="syncBranches('note')" class="w-full border p-3 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none"></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Branch</label>
-                        <select id="branchSelect" class="w-full border-gray-200 border p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                        <label class="block text-xs font-bold uppercase mb-1 opacity-60">Branch</label>
+                        <select id="noteBranch" onchange="syncSubBranches('note')" class="w-full border p-3 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none"></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Sub-Branch</label>
-                        <select id="subBranchSelect" class="w-full border-gray-200 border p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                        <label class="block text-xs font-bold uppercase mb-1 opacity-60">Sub-Branch</label>
+                        <select id="noteSubBranch" class="w-full border p-3 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none"></select>
                     </div>
                 </div>
-                <textarea id="noteInput" rows="5" class="w-full border-gray-200 border p-4 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none mb-4" placeholder="Start typing your project notes here..."></textarea>
-                <button id="saveNoteBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95">Save Note to Cloud</button>
+                <textarea id="noteInput" rows="5" class="w-full border p-4 rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 outline-none mb-4" placeholder="Note content..."></textarea>
+                <button onclick="saveNote()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all">Save Note</button>
             </div>
         </main>
 
-        <section id="table-section" class="section hidden">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <section id="table-section" class="section space-y-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <select id="filterProj" onchange="renderTable()" class="border p-2 rounded-lg dark:bg-gray-700"><option value="">All Projects</option></select>
+                    <select id="filterBranch" onchange="renderTable()" class="border p-2 rounded-lg dark:bg-gray-700"><option value="">All Branches</option></select>
+                    <select id="filterSub" onchange="renderTable()" class="border p-2 rounded-lg dark:bg-gray-700"><option value="">All Sub-Branches</option></select>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-sm">
                         <thead>
-                            <tr class="bg-gray-50 text-gray-500 uppercase text-xs font-bold">
-                                <th class="p-4 border-b">Project</th>
-                                <th class="p-4 border-b">Branch</th>
-                                <th class="p-4 border-b">Sub-Branch</th>
-                                <th class="p-4 border-b">Note Content</th>
+                            <tr class="bg-gray-50 dark:bg-gray-700 text-left">
+                                <th class="p-4 w-1/4">Context</th>
+                                <th class="p-4 w-1/2">Note</th>
+                                <th class="p-4 w-1/4 text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="notesTableBody" class="divide-y divide-gray-100"></tbody>
+                        <tbody id="notesTableBody" class="divide-y dark:divide-gray-700"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <section id="config-section" class="section hidden">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                <h3 class="font-bold text-lg mb-4 text-blue-700">Add New Project</h3>
-                <div class="flex space-x-2">
-                    <input id="newProjInput" type="text" placeholder="Project Name" class="flex-grow border border-gray-200 p-3 rounded-xl bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
-                    <button onclick="addProject()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700">Create</button>
+        <section id="config-section" class="section space-y-6">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700">
+                <h2 class="font-bold mb-4">Manage Hierarchy</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-2">
+                        <input id="newProj" type="text" placeholder="Project Name" class="w-full border p-2 rounded dark:bg-gray-700">
+                        <button onclick="addItem('projects')" class="w-full bg-green-600 text-white p-2 rounded">+ Add Project</button>
+                        <div id="projList" class="max-h-40 overflow-y-auto space-y-1"></div>
+                    </div>
+                    <div class="space-y-2 border-l pl-4 dark:border-gray-700">
+                        <select id="parentProj" class="w-full border p-2 rounded dark:bg-gray-700"></select>
+                        <input id="newBranch" type="text" placeholder="Branch Name" class="w-full border p-2 rounded dark:bg-gray-700">
+                        <button onclick="addItem('branches')" class="w-full bg-green-600 text-white p-2 rounded">+ Add Branch</button>
+                        <div id="branchList" class="max-h-40 overflow-y-auto space-y-1"></div>
+                    </div>
+                    <div class="space-y-2 border-l pl-4 dark:border-gray-700">
+                        <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch')" class="w-full border p-2 rounded dark:bg-gray-700"></select>
+                        <select id="parentBranch" class="w-full border p-2 rounded dark:bg-gray-700"></select>
+                        <input id="newSub" type="text" placeholder="Sub-Branch" class="w-full border p-2 rounded dark:bg-gray-700">
+                        <button onclick="addItem('subs')" class="w-full bg-green-600 text-white p-2 rounded">+ Add Sub</button>
+                        <div id="subList" class="max-h-40 overflow-y-auto space-y-1"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -76,12 +108,11 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA7cPiyA9ms0fz3waIsGL8076c2AyJiJV0",
             authDomain: "project-notes-fafdc.firebaseapp.com",
-            databaseURL: "https://project-notes-fafdc-default-rtdb.firebaseio.com",
             projectId: "project-notes-fafdc",
             storageBucket: "project-notes-fafdc.firebasestorage.app",
             messagingSenderId: "1098284034250",
@@ -91,67 +122,182 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        onSnapshot(collection(db, "projects"), (snapshot) => {
-            const select = document.getElementById('projSelect');
-            select.innerHTML = snapshot.empty ? '<option>No Projects Found</option>' : '';
-            snapshot.forEach(doc => {
-                select.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
-            });
-            window.loadBranches();
+        // --- GLOBAL STATE ---
+        let allProjs = [], allBranches = [], allSubs = [], allNotes = [];
+
+        // --- REALTIME SYNC ---
+        onSnapshot(collection(db, "projects"), (s) => { 
+            allProjs = s.docs.map(d => ({id: d.id, ...d.data()})); 
+            updateUI(); 
+        });
+        onSnapshot(collection(db, "branches"), (s) => { 
+            allBranches = s.docs.map(d => ({id: d.id, ...d.data()})); 
+            updateUI(); 
+        });
+        onSnapshot(collection(db, "subs"), (s) => { 
+            allSubs = s.docs.map(d => ({id: d.id, ...d.data()})); 
+            updateUI(); 
+        });
+        onSnapshot(query(collection(db, "notes"), orderBy("createdAt", "desc")), (s) => {
+            allNotes = s.docs.map(d => ({id: d.id, ...d.data()}));
+            renderTable();
         });
 
-        window.loadBranches = () => {
-            document.getElementById('branchSelect').innerHTML = `<option value="General">General</option>`;
-            document.getElementById('subBranchSelect').innerHTML = `<option value="General">General</option>`;
+        // --- CRUD LOGIC ---
+        window.addItem = async (type) => {
+            let data = {};
+            if(type === 'projects') {
+                const name = document.getElementById('newProj').value;
+                if(!name) return;
+                const pDoc = await addDoc(collection(db, "projects"), { name });
+                await addDoc(collection(db, "branches"), { name: "General", parentId: pDoc.id });
+                document.getElementById('newProj').value = '';
+            } else if(type === 'branches') {
+                const name = document.getElementById('newBranch').value;
+                const parentId = document.getElementById('parentProj').value;
+                if(!name || !parentId) return;
+                const bDoc = await addDoc(collection(db, "branches"), { name, parentId });
+                await addDoc(collection(db, "subs"), { name: "General", parentId: bDoc.id });
+                document.getElementById('newBranch').value = '';
+            } else if(type === 'subs') {
+                const name = document.getElementById('newSub').value;
+                const parentId = document.getElementById('parentBranch').value;
+                if(!name || !parentId) return;
+                await addDoc(collection(db, "subs"), { name, parentId });
+                document.getElementById('newSub').value = '';
+            }
+        };
+
+        window.deleteItem = async (type, id) => {
+            if(confirm("Are you sure? This will not delete child items, but they will become unlinked.")) {
+                await deleteDoc(doc(db, type, id));
+            }
+        };
+
+        window.editItem = async (type, id, oldName) => {
+            const newName = prompt("Enter new name:", oldName);
+            if(newName) await updateDoc(doc(db, type, id), { name: newName });
         };
 
         window.saveNote = async () => {
-            const noteText = document.getElementById('noteInput').value;
-            const project = document.getElementById('projSelect').value;
-            if(!noteText || !project) return alert("Please select a project and write a note.");
+            const text = document.getElementById('noteInput').value;
+            if(!text) return;
             await addDoc(collection(db, "notes"), {
-                project, branch: "General", subBranch: "General",
-                text: noteText, createdAt: serverTimestamp()
+                text,
+                project: document.getElementById('noteProj').value,
+                branch: document.getElementById('noteBranch').value,
+                subBranch: document.getElementById('noteSubBranch').value,
+                createdAt: serverTimestamp()
             });
             document.getElementById('noteInput').value = '';
-            alert("Saved!");
+            alert("Note Saved");
         };
-        document.getElementById('saveNoteBtn').onclick = window.saveNote;
 
-        const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            const tbody = document.getElementById('notesTableBody');
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const n = doc.data();
-                tbody.innerHTML += `<tr><td class="p-4 font-semibold text-blue-600">${n.project}</td><td class="p-4">${n.branch}</td><td class="p-4">${n.subBranch}</td><td class="p-4">${n.text}</td></tr>`;
-            });
-        });
+        window.deleteNote = async (id) => {
+            if(confirm("Delete note?")) await deleteDoc(doc(db, "notes", id));
+        };
 
-        window.addProject = async () => {
-            const name = document.getElementById('newProjInput').value;
-            if(!name) return;
-            await addDoc(collection(db, "projects"), { name });
-            document.getElementById('newProjInput').value = '';
+        // --- UI HELPERS ---
+        function updateUI() {
+            fillDrop('noteProj', allProjs);
+            fillDrop('parentProj', allProjs);
+            fillDrop('parentBranchProj', allProjs);
+            fillDrop('filterProj', allProjs, true);
+            
+            syncBranches('note');
+            syncBranches('filter');
+            updateBranchDrop('parentBranch');
+            
+            renderList('projList', allProjs, 'projects');
+            renderList('branchList', allBranches, 'branches');
+            renderList('subList', allSubs, 'subs');
+        }
+
+        window.syncBranches = (prefix) => {
+            const pName = document.getElementById(prefix + 'Proj').value;
+            const pId = allProjs.find(p => p.name === pName)?.id;
+            const filtered = allBranches.filter(b => b.parentId === pId);
+            fillDrop(prefix + 'Branch', filtered, prefix === 'filter');
+            syncSubBranches(prefix);
+        };
+
+        window.syncSubBranches = (prefix) => {
+            const bName = document.getElementById(prefix + 'Branch').value;
+            const bId = allBranches.find(b => b.name === bName)?.id;
+            const filtered = allSubs.filter(s => s.parentId === bId);
+            fillDrop(prefix + 'SubBranch', filtered, prefix === 'filter');
+        };
+
+        window.updateBranchDrop = (targetId) => {
+            const pId = document.getElementById('parentBranchProj').value;
+            const filtered = allBranches.filter(b => b.parentId === (allProjs.find(p => p.name === pId)?.id));
+            const select = document.getElementById(targetId);
+            select.innerHTML = filtered.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+        };
+
+        function fillDrop(id, list, allOpt = false) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            let html = allOpt ? `<option value="">All</option>` : '';
+            html += list.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+            el.innerHTML = html;
+        }
+
+        function renderList(id, list, type) {
+            document.getElementById(id).innerHTML = list.map(i => `
+                <div class="flex justify-between items-center text-xs p-1 bg-gray-100 dark:bg-gray-700 rounded">
+                    <span>${i.name}</span>
+                    <div class="flex space-x-1">
+                        <button onclick="editItem('${type}','${i.id}','${i.name}')">✏️</button>
+                        <button onclick="deleteItem('${type}','${i.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.renderTable = () => {
+            const fP = document.getElementById('filterProj').value;
+            const fB = document.getElementById('filterBranch').value;
+            const fS = document.getElementById('filterSubBranch').value;
+
+            const filtered = allNotes.filter(n => 
+                (!fP || n.project === fP) && 
+                (!fB || n.branch === fB) && 
+                (!fS || n.subBranch === fS)
+            );
+
+            document.getElementById('notesTableBody').innerHTML = filtered.map(n => `
+                <tr>
+                    <td class="p-4 border-r dark:border-gray-700">
+                        <div class="font-bold text-blue-600 dark:text-blue-400">${n.project}</div>
+                        <div class="text-[10px] opacity-60">${n.branch} > ${n.subBranch}</div>
+                    </td>
+                    <td class="p-4 break-words text-gray-700 dark:text-gray-300">${n.text}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteNote('${n.id}')" class="text-red-500">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
         };
     </script>
 
     <script>
         function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id + '-section').classList.remove('hidden');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id + '-section').classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('bg-white', 'shadow-sm', 'text-blue-700');
-                b.classList.add('text-gray-600');
+                b.classList.remove('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600');
             });
-            document.getElementById('btn-' + id).classList.add('bg-white', 'shadow-sm', 'text-blue-700');
+            document.getElementById('btn-' + id).classList.add('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600');
         }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js');
-            });
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('dark-icon').innerText = isDark ? '☀️' : '🌙';
         }
+
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
     </script>
 </body>
 </html>
