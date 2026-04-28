@@ -13,9 +13,20 @@
         .section.active { display: block; }
         table { table-layout: fixed; width: 100%; }
         td { word-wrap: break-word; white-space: normal; }
-        .input-group { display: flex; gap: 0.5rem; width: 100%; align-items: center; }
-        @media (max-width: 400px) {
-            .input-group { flex-direction: column; align-items: stretch; }
+        
+        /* Mobile-first button and input fixes */
+        .input-group { 
+            display: flex; 
+            flex-wrap: wrap;
+            gap: 0.5rem; 
+            width: 100%; 
+            align-items: center; 
+        }
+        .input-group input { flex: 1 1 200px; }
+        .input-group button { flex: 0 1 auto; min-width: 80px; }
+
+        @media (max-width: 640px) {
+            .input-group button { width: 100%; }
         }
     </style>
 </head>
@@ -65,7 +76,7 @@
                 </div>
                 <button onclick="exportToHTML()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 rounded-lg transition-all">📥 Export for AI Analysis</button>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden overflow-x-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-x-auto">
                 <table class="w-full text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-gray-50 dark:bg-gray-700 text-left opacity-70">
@@ -84,34 +95,34 @@
                 <h2 class="font-bold mb-4 text-blue-600">Structure Hierarchy</h2>
                 <div class="space-y-6">
                     <div>
-                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">1. Projects</label>
+                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">1. Manage Projects</label>
                         <div class="input-group mb-2">
-                            <input id="newProj" type="text" placeholder="New Project" class="flex-grow border p-2 rounded-lg dark:bg-gray-700 outline-none">
+                            <input id="newProj" type="text" placeholder="Project Name" class="border p-2 rounded-lg dark:bg-gray-700 outline-none">
                             <button onclick="addItem('projects')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Add</button>
                         </div>
                         <div id="projList" class="grid gap-2"></div>
                     </div>
                     <div class="border-t pt-4 dark:border-gray-700">
-                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">2. Branches</label>
+                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">2. Manage Branches</label>
                         <select id="parentProj" onchange="renderBranchListOnly()" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
                         <div class="input-group mb-2">
-                            <input id="newBranch" type="text" placeholder="New Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700 outline-none">
+                            <input id="newBranch" type="text" placeholder="Branch Name" class="border p-2 rounded-lg dark:bg-gray-700 outline-none">
                             <button onclick="addItem('branches')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Add</button>
                         </div>
                         <div id="branchList" class="grid gap-2"></div>
                     </div>
                     <div class="border-t pt-4 dark:border-gray-700">
-                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">3. Sub-Branches</label>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
+                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">3. Manage Sub-Branches</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                             <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch'); renderSubListOnly();" class="border p-2 rounded-lg dark:bg-gray-700"></select>
                             <select id="parentBranch" onchange="renderSubListOnly()" class="border p-2 rounded-lg dark:bg-gray-700"></select>
                         </div>
                         <div class="input-group mb-2">
-                            <input id="newSub" type="text" placeholder="New Sub-Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700 outline-none">
+                            <input id="newSub" type="text" placeholder="Sub-Branch Name" class="border p-2 rounded-lg dark:bg-gray-700 outline-none">
                             <button onclick="addItem('subs')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Add</button>
                         </div>
                         <div class="flex items-center mb-2 text-xs font-bold text-blue-500">
-                            <input type="checkbox" id="applyAll" class="mr-2 h-4 w-4"> APPLY TO ALL BRANCHES (Permanent Sync)
+                            <input type="checkbox" id="applyAll" class="mr-2 h-4 w-4"> APPLY TO ALL BRANCHES (Global Sync)
                         </div>
                         <div id="subList" class="grid gap-2"></div>
                     </div>
@@ -170,7 +181,6 @@
                 if(!name || !projectId) return;
 
                 if(isGlobal) {
-                    // Save as a Global Sub-branch for this project
                     await addDoc(collection(db, "subs"), { name, parentId: "GLOBAL", projectId: projectId, isGlobal: true });
                 } else {
                     const bName = document.getElementById('parentBranch').value;
@@ -183,9 +193,9 @@
             }
         };
 
-        window.deleteItem = async (t, id) => { if(confirm("Delete?")) await deleteDoc(doc(db, t, id)); };
+        window.deleteItem = async (t, id) => { if(confirm("Delete item?")) await deleteDoc(doc(db, t, id)); };
         window.editItem = async (t, id, old) => { 
-            const n = prompt("Edit:", old); 
+            const n = prompt("Edit name:", old); 
             if(n) await updateDoc(doc(db, t, id), { name: n });
         };
 
@@ -230,12 +240,9 @@
         window.syncSubBranches = (prefix) => {
             const bName = document.getElementById(prefix + 'Branch').value;
             const bId = allBranches.find(b => b.name === bName)?.id;
-            
-            // Get the current project ID
             const pName = document.getElementById(prefix + 'Proj').value;
             const pId = allProjs.find(p => p.name === pName)?.id;
 
-            // Combine specific subs + global project subs
             const specific = allSubs.filter(s => s.parentId === bId);
             const globals = allSubs.filter(s => s.parentId === "GLOBAL" && s.projectId === pId);
             
@@ -258,7 +265,6 @@
         window.renderSubListOnly = () => {
             const bName = document.getElementById('parentBranch').value;
             const bId = allBranches.find(b => b.name === bName)?.id;
-            
             const pName = document.getElementById('parentBranchProj').value;
             const pId = allProjs.find(p => p.name === pName)?.id;
 
@@ -271,7 +277,6 @@
         function fillDrop(id, list, allOpt = false) {
             const el = document.getElementById(id);
             if(!el) return;
-            // Deduplicate names if a global and local exist with same name
             const unique = [];
             const seen = new Set();
             list.forEach(item => {
@@ -285,9 +290,9 @@
 
         function renderList(id, list, type) {
             document.getElementById(id).innerHTML = list.map(i => `
-                <div class="flex justify-between items-center p-3 ${i.isGlobal ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' : 'bg-gray-100 dark:bg-gray-700'} rounded-lg text-sm border dark:border-gray-600">
-                    <span class="truncate pr-2 ${i.isGlobal ? 'font-bold text-blue-600' : ''}">${i.isGlobal ? '[G] ' : ''}${i.name}</span>
-                    <div class="flex space-x-3 flex-shrink-0">
+                <div class="flex justify-between items-center p-3 ${i.isGlobal ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' : 'bg-gray-100 dark:bg-gray-700'} rounded-lg text-sm border dark:border-gray-600 shadow-sm">
+                    <span class="truncate pr-2 font-medium">${i.isGlobal ? '[G] ' : ''}${i.name}</span>
+                    <div class="flex space-x-4 flex-shrink-0">
                         <button onclick="editItem('${type}','${i.id}','${i.name}')">✏️</button>
                         <button onclick="deleteItem('${type}','${i.id}')">🗑️</button>
                     </div>
@@ -306,11 +311,11 @@
             const fS = document.getElementById('filterSubBranch').value;
             const filtered = allNotes.filter(n => (!fP || n.project === fP) && (!fB || n.branch === fB) && (!fS || n.subBranch === fS));
             document.getElementById('notesTableBody').innerHTML = filtered.map(n => `
-                <tr class="align-top">
+                <tr class="align-top hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td class="p-4 border-r dark:border-gray-700">
                         <div class="font-bold text-blue-600 text-[10px]">${n.project}</div>
-                        <div class="text-[9px] opacity-50 uppercase">${n.branch} > ${n.subBranch}</div>
-                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-2 block hover:underline">Delete</button>
+                        <div class="text-[9px] opacity-50 uppercase mt-1">${n.branch} > ${n.subBranch}</div>
+                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-3 block hover:underline">Delete</button>
                     </td>
                     <td class="p-4 text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">${n.text}</td>
                     <td class="p-4 text-[10px] opacity-60">${formatTS(n.updatedAt || n.createdAt)}</td>
@@ -326,13 +331,13 @@
             );
 
             let rows = filtered.map(n => `<tr><td>${n.project} > ${n.branch} > ${n.subBranch}</td><td>${n.text}</td><td>${formatTS(n.updatedAt || n.createdAt)}</td></tr>`).join('');
-            const htmlContent = `<!DOCTYPE html><html><head><style>body{font-family:sans-serif;padding:20px;}.guideline{background:#fff3cd;padding:15px;border:1px solid #ffeeba;margin-bottom:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:10px;text-align:left;vertical-align:top;}th{background:#f8f9fa;}</style></head><body><div class="guideline"><strong>AI Guideline:</strong> Recent "Last Update" takes precedence.</div><h2>Project Data: ${fP}</h2><table><thead><tr><th>Context</th><th>Requirement</th><th>Last Update</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+            const htmlContent = `<!DOCTYPE html><html><head><style>body{font-family:sans-serif;padding:20px;}.guideline{background:#fff3cd;padding:15px;border:1px solid #ffeeba;margin-bottom:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:10px;text-align:left;vertical-align:top;}th{background:#f8f9fa;}</style></head><body><div class="guideline"><strong>AI Guideline:</strong> In case of logic conflicts, use the most recent timestamp.</div><h2>Project Report: ${fP}</h2><table><thead><tr><th>Context</th><th>Requirement</th><th>Last Update</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `AI_Report_${fP}.html`; a.click();
+            a.href = url; a.download = `AI_Analysis_Report.html`; a.click();
         };
-    </div>
+    </script>
 
     <script>
         function showSection(id) {
