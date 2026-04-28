@@ -13,7 +13,6 @@
         .section.active { display: block; }
         table { table-layout: fixed; width: 100%; }
         td { word-wrap: break-word; white-space: normal; }
-        /* Fix for mobile button overflow */
         .input-group { display: flex; gap: 0.5rem; width: 100%; align-items: center; }
         @media (max-width: 400px) {
             .input-group { flex-direction: column; align-items: stretch; }
@@ -85,6 +84,7 @@
                 <h2 class="font-bold mb-4 text-blue-600">Structure Hierarchy</h2>
                 <div class="space-y-6">
                     <div>
+                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">1. Projects</label>
                         <div class="input-group mb-2">
                             <input id="newProj" type="text" placeholder="New Project" class="flex-grow border p-2 rounded-lg dark:bg-gray-700 outline-none">
                             <button onclick="addItem('projects')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Add</button>
@@ -92,6 +92,7 @@
                         <div id="projList" class="grid gap-2"></div>
                     </div>
                     <div class="border-t pt-4 dark:border-gray-700">
+                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">2. Branches</label>
                         <select id="parentProj" onchange="renderBranchListOnly()" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
                         <div class="input-group mb-2">
                             <input id="newBranch" type="text" placeholder="New Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700 outline-none">
@@ -100,6 +101,7 @@
                         <div id="branchList" class="grid gap-2"></div>
                     </div>
                     <div class="border-t pt-4 dark:border-gray-700">
+                        <label class="block text-xs font-bold mb-1 opacity-50 uppercase">3. Sub-Branches</label>
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch'); renderSubListOnly();" class="border p-2 rounded-lg dark:bg-gray-700"></select>
                             <select id="parentBranch" onchange="renderSubListOnly()" class="border p-2 rounded-lg dark:bg-gray-700"></select>
@@ -108,8 +110,8 @@
                             <input id="newSub" type="text" placeholder="New Sub-Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700 outline-none">
                             <button onclick="addItem('subs')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Add</button>
                         </div>
-                        <div class="flex items-center mb-2 text-xs">
-                            <input type="checkbox" id="applyAll" class="mr-2"> Apply to all branches in project
+                        <div class="flex items-center mb-2 text-xs font-bold text-blue-500">
+                            <input type="checkbox" id="applyAll" class="mr-2 h-4 w-4"> APPLY TO ALL BRANCHES (Permanent Sync)
                         </div>
                         <div id="subList" class="grid gap-2"></div>
                     </div>
@@ -162,15 +164,18 @@
             } else if(type === 'subs') {
                 const name = document.getElementById('newSub').value;
                 const isGlobal = document.getElementById('applyAll').checked;
+                const pName = document.getElementById('parentBranchProj').value;
+                const projectId = allProjs.find(p => p.name === pName)?.id;
+                
+                if(!name || !projectId) return;
+
                 if(isGlobal) {
-                    const pName = document.getElementById('parentBranchProj').value;
-                    const pId = allProjs.find(p => p.name === pName)?.id;
-                    const projBranches = allBranches.filter(b => b.parentId === pId);
-                    for(let b of projBranches) await addDoc(collection(db, "subs"), { name, parentId: b.id });
+                    // Save as a Global Sub-branch for this project
+                    await addDoc(collection(db, "subs"), { name, parentId: "GLOBAL", projectId: projectId, isGlobal: true });
                 } else {
                     const bName = document.getElementById('parentBranch').value;
                     const parentId = allBranches.find(b => b.name === bName)?.id;
-                    if(!name || !parentId) return;
+                    if(!parentId) return;
                     await addDoc(collection(db, "subs"), { name, parentId });
                 }
                 document.getElementById('newSub').value = '';
@@ -181,11 +186,7 @@
         window.deleteItem = async (t, id) => { if(confirm("Delete?")) await deleteDoc(doc(db, t, id)); };
         window.editItem = async (t, id, old) => { 
             const n = prompt("Edit:", old); 
-            if(n) {
-                await updateDoc(doc(db, t, id), { name: n });
-                // If it's a note, update its timestamp
-                if(t === 'notes') await updateDoc(doc(db, t, id), { updatedAt: serverTimestamp() });
-            }
+            if(n) await updateDoc(doc(db, t, id), { name: n });
         };
 
         window.saveNote = async () => {
@@ -229,8 +230,16 @@
         window.syncSubBranches = (prefix) => {
             const bName = document.getElementById(prefix + 'Branch').value;
             const bId = allBranches.find(b => b.name === bName)?.id;
-            const filtered = allSubs.filter(s => s.parentId === bId);
-            fillDrop(prefix + 'SubBranch', filtered, prefix === 'filter');
+            
+            // Get the current project ID
+            const pName = document.getElementById(prefix + 'Proj').value;
+            const pId = allProjs.find(p => p.name === pName)?.id;
+
+            // Combine specific subs + global project subs
+            const specific = allSubs.filter(s => s.parentId === bId);
+            const globals = allSubs.filter(s => s.parentId === "GLOBAL" && s.projectId === pId);
+            
+            fillDrop(prefix + 'SubBranch', [...specific, ...globals], prefix === 'filter');
         };
 
         window.updateBranchDrop = (targetId) => {
@@ -249,19 +258,35 @@
         window.renderSubListOnly = () => {
             const bName = document.getElementById('parentBranch').value;
             const bId = allBranches.find(b => b.name === bName)?.id;
-            renderList('subList', allSubs.filter(s => s.parentId === bId), 'subs');
+            
+            const pName = document.getElementById('parentBranchProj').value;
+            const pId = allProjs.find(p => p.name === pName)?.id;
+
+            const specific = allSubs.filter(s => s.parentId === bId);
+            const globals = allSubs.filter(s => s.parentId === "GLOBAL" && s.projectId === pId);
+            
+            renderList('subList', [...specific, ...globals], 'subs');
         };
 
         function fillDrop(id, list, allOpt = false) {
             const el = document.getElementById(id);
             if(!el) return;
-            el.innerHTML = (allOpt ? '<option value="">All</option>' : '') + list.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+            // Deduplicate names if a global and local exist with same name
+            const unique = [];
+            const seen = new Set();
+            list.forEach(item => {
+                if(!seen.has(item.name)) {
+                    unique.push(item);
+                    seen.add(item.name);
+                }
+            });
+            el.innerHTML = (allOpt ? '<option value="">All</option>' : '') + unique.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
         }
 
         function renderList(id, list, type) {
             document.getElementById(id).innerHTML = list.map(i => `
-                <div class="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
-                    <span class="truncate pr-2">${i.name}</span>
+                <div class="flex justify-between items-center p-3 ${i.isGlobal ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' : 'bg-gray-100 dark:bg-gray-700'} rounded-lg text-sm border dark:border-gray-600">
+                    <span class="truncate pr-2 ${i.isGlobal ? 'font-bold text-blue-600' : ''}">${i.isGlobal ? '[G] ' : ''}${i.name}</span>
                     <div class="flex space-x-3 flex-shrink-0">
                         <button onclick="editItem('${type}','${i.id}','${i.name}')">✏️</button>
                         <button onclick="deleteItem('${type}','${i.id}')">🗑️</button>
@@ -284,8 +309,8 @@
                 <tr class="align-top">
                     <td class="p-4 border-r dark:border-gray-700">
                         <div class="font-bold text-blue-600 text-[10px]">${n.project}</div>
-                        <div class="text-[9px] opacity-50">${n.branch} > ${n.subBranch}</div>
-                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-2 block">Delete</button>
+                        <div class="text-[9px] opacity-50 uppercase">${n.branch} > ${n.subBranch}</div>
+                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-2 block hover:underline">Delete</button>
                     </td>
                     <td class="p-4 text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">${n.text}</td>
                     <td class="p-4 text-[10px] opacity-60">${formatTS(n.updatedAt || n.createdAt)}</td>
@@ -300,47 +325,14 @@
                 (!document.getElementById('filterSubBranch').value || n.subBranch === document.getElementById('filterSubBranch').value)
             );
 
-            let rows = filtered.map(n => `
-                <tr>
-                    <td>${n.project} > ${n.branch} > ${n.subBranch}</td>
-                    <td>${n.text}</td>
-                    <td>${formatTS(n.updatedAt || n.createdAt)}</td>
-                </tr>
-            `).join('');
-
-            const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: sans-serif; padding: 20px; line-height: 1.5; }
-                    .guideline { background: #fff3cd; padding: 15px; border: 1px solid #ffeeba; margin-bottom: 20px; border-radius: 5px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
-                    th { background: #f8f9fa; }
-                </style>
-            </head>
-            <body>
-                <div class="guideline">
-                    <strong>AI Guideline:</strong> This document contains technical requirements for code generation. 
-                    If there are any conflicts or inconsistencies in the notes provided below, <strong>the note with the most recent "Last Update" timestamp must be taken as the definitive source of truth</strong> for development.
-                </div>
-                <h2>Project Data: ${fP}</h2>
-                <table>
-                    <thead><tr><th>Context</th><th>Requirement/Note</th><th>Last Update</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </body>
-            </html>`;
-
+            let rows = filtered.map(n => `<tr><td>${n.project} > ${n.branch} > ${n.subBranch}</td><td>${n.text}</td><td>${formatTS(n.updatedAt || n.createdAt)}</td></tr>`).join('');
+            const htmlContent = `<!DOCTYPE html><html><head><style>body{font-family:sans-serif;padding:20px;}.guideline{background:#fff3cd;padding:15px;border:1px solid #ffeeba;margin-bottom:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:10px;text-align:left;vertical-align:top;}th{background:#f8f9fa;}</style></head><body><div class="guideline"><strong>AI Guideline:</strong> Recent "Last Update" takes precedence.</div><h2>Project Data: ${fP}</h2><table><thead><tr><th>Context</th><th>Requirement</th><th>Last Update</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `AI_Input_Report_${fP}.html`;
-            a.click();
+            a.href = url; a.download = `AI_Report_${fP}.html`; a.click();
         };
-    </script>
+    </div>
 
     <script>
         function showSection(id) {
