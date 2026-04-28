@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Notes Pro</title>
+    <title>Project Studio Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="manifest.json">
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
@@ -14,6 +13,7 @@
         .section.active { display: block; }
         table { table-layout: fixed; width: 100%; }
         td { word-wrap: break-word; white-space: normal; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-200">
@@ -27,15 +27,9 @@
         </header>
 
         <nav class="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-xl mb-6 shadow-inner">
-            <button onclick="showSection('add')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm transition-all bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" id="btn-add">
-                Add Note
-            </button>
-            <button onclick="showSection('table')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all" id="btn-table">
-                Reports
-            </button>
-            <button onclick="showSection('config')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all" id="btn-config">
-                Manage
-            </button>
+            <button onclick="showSection('add')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm transition-all bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" id="btn-add">Add Note</button>
+            <button onclick="showSection('table')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all" id="btn-table">Reports</button>
+            <button onclick="showSection('config')" class="nav-btn flex-1 py-2 px-1 rounded-lg font-medium text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all" id="btn-config">Manage Hierarchy</button>
         </nav>
 
         <main id="add-section" class="section active space-y-4">
@@ -66,52 +60,54 @@
                     <select id="filterBranch" onchange="syncSubBranches('filter'); renderTable();" class="text-xs border p-2 rounded-lg dark:bg-gray-700 outline-none"></select>
                     <select id="filterSubBranch" onchange="renderTable()" class="text-xs border p-2 rounded-lg dark:bg-gray-700 outline-none"></select>
                 </div>
-                <button onclick="exportToHTML()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 rounded-lg transition-all">
-                    📥 Export Filtered Notes for AI Analysis
-                </button>
+                <button onclick="exportToHTML()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 rounded-lg transition-all">📥 Export Filtered Notes</button>
             </div>
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-700 text-left opacity-70">
-                                <th class="p-4 w-1/3">Context</th>
-                                <th class="p-4 w-2/3">Note</th>
-                            </tr>
-                        </thead>
-                        <tbody id="notesTableBody" class="divide-y dark:divide-gray-700"></tbody>
-                    </table>
-                </div>
+                <table class="w-full text-sm">
+                    <thead><tr class="bg-gray-50 dark:bg-gray-700 text-left opacity-70"><th class="p-4 w-1/3">Context</th><th class="p-4 w-2/3">Note</th></tr></thead>
+                    <tbody id="notesTableBody" class="divide-y dark:divide-gray-700"></tbody>
+                </table>
             </div>
         </section>
 
         <section id="config-section" class="section space-y-6">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700">
-                <h2 class="font-bold mb-4 text-blue-600">Structure Hierarchy</h2>
+                <h2 class="font-bold mb-6 text-blue-600 border-b pb-2 dark:border-gray-700">Structure Hierarchy</h2>
+                
                 <div class="space-y-8">
-                    <div>
-                        <div class="flex space-x-2 mb-2">
-                            <input id="newProj" type="text" placeholder="New Project" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
-                            <button onclick="addItem('projects')" class="bg-green-600 text-white px-4 rounded-lg font-bold">+</button>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                        <label class="block text-xs font-bold mb-2 uppercase opacity-50">1. Manage Projects</label>
+                        <div class="flex space-x-2 mb-4">
+                            <input id="newProj" type="text" placeholder="New Project Name" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
+                            <button onclick="addItem('projects')" class="bg-blue-600 text-white px-6 rounded-lg font-bold">Add</button>
                         </div>
-                        <div id="projList" class="grid grid-cols-1 gap-2"></div>
+                        <div id="projList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
                     </div>
-                    <div class="border-t pt-4 dark:border-gray-700">
-                        <select id="parentProj" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
-                        <div class="flex space-x-2 mb-2">
-                            <input id="newBranch" type="text" placeholder="New Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
-                            <button onclick="addItem('branches')" class="bg-green-600 text-white px-4 rounded-lg font-bold">+</button>
+
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                        <label class="block text-xs font-bold mb-2 uppercase opacity-50">2. Manage Branches</label>
+                        <select id="parentProj" onchange="renderBranchListOnly()" class="w-full border p-2 mb-4 rounded-lg dark:bg-gray-700"></select>
+                        <div class="flex space-x-2 mb-4">
+                            <input id="newBranch" type="text" placeholder="New Branch Name" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
+                            <button onclick="addItem('branches')" class="bg-blue-600 text-white px-6 rounded-lg font-bold">Add</button>
                         </div>
-                        <div id="branchList" class="grid grid-cols-1 gap-2"></div>
+                        <div id="branchList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
                     </div>
-                    <div class="border-t pt-4 dark:border-gray-700">
-                        <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch')" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
-                        <select id="parentBranch" class="w-full border p-2 mb-2 rounded-lg dark:bg-gray-700"></select>
-                        <div class="flex space-x-2 mb-2">
-                            <input id="newSub" type="text" placeholder="New Sub-Branch" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
-                            <button onclick="addItem('subs')" class="bg-green-600 text-white px-4 rounded-lg font-bold">+</button>
+
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                        <label class="block text-xs font-bold mb-2 uppercase opacity-50">3. Manage Sub-Branches</label>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <select id="parentBranchProj" onchange="updateBranchDrop('parentBranch'); renderSubListOnly();" class="border p-2 rounded-lg dark:bg-gray-700"></select>
+                            <select id="parentBranch" onchange="renderSubListOnly()" class="border p-2 rounded-lg dark:bg-gray-700"></select>
                         </div>
-                        <div id="subList" class="grid grid-cols-1 gap-2"></div>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <input id="newSub" type="text" placeholder="New Sub-Branch Name" class="flex-grow border p-2 rounded-lg dark:bg-gray-700">
+                            <label class="flex items-center bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-lg cursor-pointer">
+                                <input type="checkbox" id="applyAll" class="mr-2"> <span class="text-[10px] font-bold uppercase">All Branches</span>
+                            </label>
+                            <button onclick="addItem('subs')" class="bg-blue-600 text-white px-6 rounded-lg font-bold">Add</button>
+                        </div>
+                        <div id="subList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
                     </div>
                 </div>
             </div>
@@ -148,7 +144,8 @@
                 const pDoc = await addDoc(collection(db, "projects"), { name });
                 await addDoc(collection(db, "branches"), { name: "General", parentId: pDoc.id });
                 document.getElementById('newProj').value = '';
-            } else if(type === 'branches') {
+            } 
+            else if(type === 'branches') {
                 const name = document.getElementById('newBranch').value;
                 const pName = document.getElementById('parentProj').value;
                 const parentId = allProjs.find(p => p.name === pName)?.id;
@@ -156,18 +153,32 @@
                 const bDoc = await addDoc(collection(db, "branches"), { name, parentId });
                 await addDoc(collection(db, "subs"), { name: "General", parentId: bDoc.id });
                 document.getElementById('newBranch').value = '';
-            } else if(type === 'subs') {
+            } 
+            else if(type === 'subs') {
                 const name = document.getElementById('newSub').value;
-                const bName = document.getElementById('parentBranch').value;
-                const parentId = allBranches.find(b => b.name === bName)?.id;
-                if(!name || !parentId) return;
-                await addDoc(collection(db, "subs"), { name, parentId });
+                const isGlobal = document.getElementById('applyAll').checked;
+                
+                if(isGlobal) {
+                    const pName = document.getElementById('parentBranchProj').value;
+                    const pId = allProjs.find(p => p.name === pName)?.id;
+                    const projectBranches = allBranches.filter(b => b.parentId === pId);
+                    
+                    for(let branch of projectBranches) {
+                        await addDoc(collection(db, "subs"), { name, parentId: branch.id });
+                    }
+                } else {
+                    const bName = document.getElementById('parentBranch').value;
+                    const parentId = allBranches.find(b => b.name === bName)?.id;
+                    if(!name || !parentId) return;
+                    await addDoc(collection(db, "subs"), { name, parentId });
+                }
                 document.getElementById('newSub').value = '';
+                document.getElementById('applyAll').checked = false;
             }
         };
 
-        window.deleteItem = async (t, id) => { if(confirm("Delete?")) await deleteDoc(doc(db, t, id)); };
-        window.editItem = async (t, id, old) => { const n = prompt("Edit:", old); if(n) await updateDoc(doc(db, t, id), { name: n }); };
+        window.deleteItem = async (t, id) => { if(confirm("Delete this item and its references?")) await deleteDoc(doc(db, t, id)); };
+        window.editItem = async (t, id, old) => { const n = prompt("Edit name:", old); if(n) await updateDoc(doc(db, t, id), { name: n }); };
 
         window.saveNote = async () => {
             const text = document.getElementById('noteInput').value;
@@ -193,9 +204,23 @@
             syncBranches('filter');
             updateBranchDrop('parentBranch');
             renderList('projList', allProjs, 'projects');
-            renderList('branchList', allBranches, 'branches');
-            renderList('subList', allSubs, 'subs');
+            renderBranchListOnly();
+            renderSubListOnly();
         }
+
+        window.renderBranchListOnly = () => {
+            const pName = document.getElementById('parentProj').value;
+            const pId = allProjs.find(p => p.name === pName)?.id;
+            const filtered = allBranches.filter(b => b.parentId === pId);
+            renderList('branchList', filtered, 'branches');
+        };
+
+        window.renderSubListOnly = () => {
+            const bName = document.getElementById('parentBranch').value;
+            const bId = allBranches.find(b => b.name === bName)?.id;
+            const filtered = allSubs.filter(s => s.parentId === bId);
+            renderList('subList', filtered, 'subs');
+        };
 
         window.syncBranches = (prefix) => {
             const pName = document.getElementById(prefix + 'Proj').value;
@@ -209,7 +234,7 @@
             const bName = document.getElementById(prefix + 'Branch').value;
             const bId = allBranches.find(b => b.name === bName)?.id;
             const filtered = allSubs.filter(s => s.parentId === bId);
-            fillDrop(prefix + (prefix === 'filter' ? 'SubBranch' : 'SubBranch'), filtered, prefix === 'filter');
+            fillDrop(prefix + 'SubBranch', filtered, prefix === 'filter');
         };
 
         window.updateBranchDrop = (targetId) => {
@@ -227,11 +252,11 @@
 
         function renderList(id, list, type) {
             document.getElementById(id).innerHTML = list.map(i => `
-                <div class="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
-                    <span>${i.name}</span>
-                    <div class="space-x-2">
-                        <button onclick="editItem('${type}','${i.id}','${i.name}')">✏️</button>
-                        <button onclick="deleteItem('${type}','${i.id}')">🗑️</button>
+                <div class="flex justify-between items-center p-2 bg-white dark:bg-gray-700 rounded-lg text-sm border dark:border-gray-600 shadow-sm">
+                    <span class="truncate mr-2 font-medium">${i.name}</span>
+                    <div class="flex space-x-2 flex-shrink-0">
+                        <button onclick="editItem('${type}','${i.id}','${i.name}')" class="hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded">✏️</button>
+                        <button onclick="deleteItem('${type}','${i.id}')" class="hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded">🗑️</button>
                     </div>
                 </div>`).join('');
         }
@@ -242,78 +267,30 @@
             const fS = document.getElementById('filterSubBranch').value;
             const filtered = allNotes.filter(n => (!fP || n.project === fP) && (!fB || n.branch === fB) && (!fS || n.subBranch === fS));
             document.getElementById('notesTableBody').innerHTML = filtered.map(n => `
-                <tr class="align-top">
+                <tr class="align-top hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td class="p-4 border-r dark:border-gray-700">
                         <div class="font-bold text-blue-600 text-xs">${n.project}</div>
-                        <div class="text-[9px] opacity-50">${n.branch} > ${n.subBranch}</div>
-                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-2 block">Delete</button>
+                        <div class="text-[9px] opacity-50 uppercase tracking-widest mt-1">${n.branch} > ${n.subBranch}</div>
+                        <button onclick="deleteNote('${n.id}')" class="text-[9px] text-red-500 mt-3 block hover:underline">Delete Note</button>
                     </td>
-                    <td class="p-4 text-gray-700 dark:text-gray-300 leading-relaxed">${n.text}</td>
+                    <td class="p-4 text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">${n.text}</td>
                 </tr>`).join('');
         };
 
-        // EXPORT FUNCTIONALITY
         window.exportToHTML = () => {
             const fP = document.getElementById('filterProj').value || "All Projects";
-            const fB = document.getElementById('filterBranch').value || "All Branches";
-            const fS = document.getElementById('filterSubBranch').value || "All Sub-Branches";
-            
             const filtered = allNotes.filter(n => 
                 (!document.getElementById('filterProj').value || n.project === document.getElementById('filterProj').value) && 
                 (!document.getElementById('filterBranch').value || n.branch === document.getElementById('filterBranch').value) && 
                 (!document.getElementById('filterSubBranch').value || n.subBranch === document.getElementById('filterSubBranch').value)
             );
-
             if (filtered.length === 0) return alert("No data to export!");
-
-            let rows = filtered.map(n => `
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">${n.project}</td>
-                    <td style="border: 1px solid #ddd; padding: 12px;">${n.branch}</td>
-                    <td style="border: 1px solid #ddd; padding: 12px;">${n.subBranch}</td>
-                    <td style="border: 1px solid #ddd; padding: 12px; line-height: 1.6;">${n.text}</td>
-                </tr>
-            `).join('');
-
-            const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Project Notes Export - ${fP}</title>
-                <style>
-                    body { font-family: sans-serif; padding: 40px; color: #333; }
-                    h1 { color: #1d4ed8; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th { background: #f3f4f6; text-align: left; padding: 12px; border: 1px solid #ddd; }
-                </style>
-            </head>
-            <body>
-                <h1>Project Report: ${fP}</h1>
-                <p><strong>Filter Context:</strong> ${fB} / ${fS}</p>
-                <p><em>Exported on: ${new Date().toLocaleString()}</em></p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Project</th>
-                            <th>Branch</th>
-                            <th>Sub-Branch</th>
-                            <th>Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </body>
-            </html>`;
-
+            let rows = filtered.map(n => `<tr><td style="border:1px solid #ddd;padding:12px;font-weight:bold;">${n.project}</td><td style="border:1px solid #ddd;padding:12px;">${n.branch}</td><td style="border:1px solid #ddd;padding:12px;">${n.subBranch}</td><td style="border:1px solid #ddd;padding:12px;line-height:1.6;">${n.text}</td></tr>`).join('');
+            const htmlContent = `<!DOCTYPE html><html><head><title>Export</title><style>body{font-family:sans-serif;padding:40px;}table{width:100%;border-collapse:collapse;}th{background:#f3f4f6;text-align:left;padding:12px;border:1px solid #ddd;}</style></head><body><h1>Project Report: ${fP}</h1><table><thead><tr><th>Project</th><th>Branch</th><th>Sub-Branch</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `Project_Report_${fP.replace(/\s+/g, '_')}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            a.href = url; a.download = `Report_${fP}.html`; a.click();
         };
     </script>
 
@@ -327,13 +304,11 @@
             });
             const btn = document.getElementById('btn-' + id);
             btn.classList.add('bg-white', 'shadow-sm', 'dark:bg-gray-700', 'text-blue-600', 'dark:text-blue-400');
-            btn.classList.remove('text-gray-600', 'dark:text-gray-400');
         }
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
             document.getElementById('dark-icon').innerText = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
         }
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
     </script>
 </body>
 </html>
